@@ -1,8 +1,8 @@
-# Dokument wymagań produktu (PRD) - FlashcardMaster
+# Dokument wymagań produktu (PRD) - 10xFlashcards
 
 ## 1. Przegląd produktu
 
-FlashcardMaster to aplikacja webowa zaprojektowana, aby umożliwić użytkownikom, głównie studentom, szybkie i efektywne tworzenie fiszek edukacyjnych. Aplikacja rozwiązuje problem czasochłonnego, manualnego tworzenia fiszek, oferując funkcję generowania ich za pomocą AI na podstawie dostarczonego tekstu. Użytkownicy mogą również tworzyć fiszki ręcznie. Fiszki są organizowane w ramach "Tematów" tworzonych przez użytkownika. Aplikacja zawiera standardowe funkcje zarządzania kontem użytkownika oraz integruje się z zewnętrzną biblioteką do nauki metodą powtarzania w odstępach (Spaced Repetition - SR). Celem wersji MVP jest dostarczenie podstawowych funkcji tworzenia, zarządzania i nauki fiszek, ze szczególnym naciskiem na usprawnienie procesu tworzenia dzięki AI.
+10xFlashcards to aplikacja webowa zaprojektowana, aby umożliwić użytkownikom, głównie studentom, szybkie i efektywne tworzenie fiszek edukacyjnych. Aplikacja rozwiązuje problem czasochłonnego, manualnego tworzenia fiszek, oferując funkcję generowania ich za pomocą AI na podstawie dostarczonego tekstu. Użytkownicy mogą również tworzyć fiszki ręcznie. Fiszki są organizowane w ramach "Tematów" tworzonych przez użytkownika. Aplikacja zawiera standardowe funkcje zarządzania kontem użytkownika oraz integruje się z zewnętrzną biblioteką do nauki metodą powtarzania w odstępach (Spaced Repetition - SR). Celem wersji MVP jest dostarczenie podstawowych funkcji tworzenia, zarządzania i nauki fiszek, ze szczególnym naciskiem na usprawnienie procesu tworzenia dzięki AI.
 
 ## 2. Problem użytkownika
 
