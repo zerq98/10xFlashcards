@@ -1,6 +1,6 @@
-# AI Rules for FlashcardMaster
+# AI Rules for 10xFlashcards
 
-FlashcardMaster to aplikacja web umożliwiająca użytkownikom szybkie i efektywne tworzenie fiszek edukacyjnych. Aplikacja pozwala na generowanie fiszek przy użyciu AI na podstawie wprowadzonego tekstu oraz ręczne tworzenie fiszek. Użytkownik przed przejściem do widoku listy fiszek najpierw wybiera kategorię, w ramach której mają być dodane fiszki – zarówno te wygenerowane przez AI, jak i te tworzone manualnie. Wspólna lista fiszek zawiera wyraźne oznaczenie, które fiszki są generowane przez AI, a które dodane ręcznie. Edycja danych fiszki odbywa się w modalnym oknie. Dodatkowo, aplikacja wspiera standardowe funkcje zarządzania kontem (rejestracja, logowanie, odzyskiwanie hasła, zmiana hasła i usuwanie konta) oraz integrację z gotowym algorytmem powtórek.
+10xFlashcards to aplikacja web umożliwiająca użytkownikom szybkie i efektywne tworzenie fiszek edukacyjnych. Aplikacja pozwala na generowanie fiszek przy użyciu AI na podstawie wprowadzonego tekstu oraz ręczne tworzenie fiszek. Użytkownik przed przejściem do widoku listy fiszek najpierw wybiera kategorię, w ramach której mają być dodane fiszki – zarówno te wygenerowane przez AI, jak i te tworzone manualnie. Wspólna lista fiszek zawiera wyraźne oznaczenie, które fiszki są generowane przez AI, a które dodane ręcznie. Edycja danych fiszki odbywa się w modalnym oknie. Dodatkowo, aplikacja wspiera standardowe funkcje zarządzania kontem (rejestracja, logowanie, odzyskiwanie hasła, zmiana hasła i usuwanie konta) oraz integrację z gotowym algorytmem powtórek.
 
 ## Tech Stack
 

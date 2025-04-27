@@ -1,47 +1,98 @@
-# Astro Starter Kit: Minimal
+# 10xFlashcards
 
-```sh
-npm create astro@latest -- --template minimal
-```
+## Project Description
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/minimal)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/minimal)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/minimal/devcontainer.json)
+10xFlashcards is a web application designed to help users, primarily students, quickly and effectively create educational flashcards. It addresses the time-consuming nature of manual flashcard creation by offering AI-powered generation based on user-provided text, alongside traditional manual creation methods. Flashcards are organized within user-created "Topics". The application also includes standard user account management features (registration, login, password recovery, etc.) and integrates with an external Spaced Repetition (SR) library to facilitate learning.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+The core goal of the Minimum Viable Product (MVP) is to deliver essential features for creating, managing, and studying flashcards, with a particular emphasis on streamlining the creation process through AI.
 
-## 🚀 Project Structure
+## Tech Stack
 
-Inside of your Astro project, you'll see the following folders and files:
+*   **Frontend:**
+    *   [Astro 5](https://astro.build/): For building fast, content-focused websites with minimal client-side JavaScript.
+    *   [React 19](https://react.dev/): For interactive UI components where needed.
+    *   [TypeScript 5](https://www.typescriptlang.org/): For static typing and improved developer experience.
+    *   [Tailwind CSS 4](https://tailwindcss.com/): For utility-first styling.
+    *   [Shadcn/ui](https://ui.shadcn.com/): For accessible and reusable React components.
+*   **Backend:**
+    *   [Supabase](https://supabase.com/): Open-source Firebase alternative providing PostgreSQL database, authentication, and BaaS SDKs.
+*   **AI:**
+    *   [OpenRouter.ai](https://openrouter.ai/): API gateway for accessing various AI models (e.g., OpenAI, Anthropic, Google) for flashcard generation.
+*   **CI/CD & Hosting:**
+    *   [GitHub Actions](https://github.com/features/actions): For continuous integration and deployment pipelines.
+    *   [DigitalOcean](https://www.digitalocean.com/): For hosting the application via Docker containers (planned).
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
+## Getting Started Locally
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+Follow these steps to set up and run the project locally:
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+1.  **Prerequisites:**
+    *   Node.js (LTS version recommended)
+    *   npm, yarn, or pnpm package manager
 
-Any static assets, like images, can be placed in the `public/` directory.
+2.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    cd react
+    ```
 
-## 🧞 Commands
+3.  **Install dependencies:**
+    ```bash
+    npm install
+    # or yarn install / pnpm install
+    ```
 
-All commands are run from the root of the project, from a terminal:
+4.  **Set up environment variables:**
+    *   Create a `.env` file in the project root.
+    *   Add the necessary environment variables for Supabase (URL, anon key) and OpenRouter (API key). Refer to `.env.example` if available (Note: `.env.example` needs to be created).
+    ```env
+    # .env
+    PUBLIC_SUPABASE_URL=YOUR_SUPABASE_URL
+    PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+    OPENROUTER_API_KEY=YOUR_OPENROUTER_API_KEY
+    # Add other variables as needed
+    ```
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+5.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
+    The application should now be running on `http://localhost:4321` (or the port specified by Astro).
 
-## 👀 Want to learn more?
+## Available Scripts
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+The following scripts are available in `package.json`:
+
+*   `npm run dev`: Starts the Astro development server with hot module reloading.
+*   `npm run build`: Builds the application for production.
+*   `npm run preview`: Starts a local server to preview the production build.
+*   `npm run astro`: Provides access to the Astro CLI for various commands.
+
+## Project Scope (MVP)
+
+### Included in MVP:
+
+*   AI-powered flashcard generation from pasted text.
+*   Manual flashcard creation.
+*   Viewing, editing, and deleting flashcards and topics.
+*   Basic user account system (email/password) for data persistence.
+*   Integration with a pre-built, external Spaced Repetition (SR) library.
+*   Web application accessible via a browser.
+
+### Not Included in MVP:
+
+*   Advanced or custom SR algorithm (like SuperMemo or Anki).
+*   Importing flashcards from files (e.g., PDF, DOCX, CSV).
+*   Social features (e.g., sharing flashcard sets, commenting).
+*   Integrations with external educational platforms or tools.
+*   Dedicated native mobile applications (iOS, Android).
+*   Advanced text formatting on flashcards (e.g., Markdown, images).
+*   Offline mode functionality.
+
+## Project Status
+
+The project is currently **under development**, focusing on implementing the features defined for the Minimum Viable Product (MVP).
+
+## License
+
+This project is licensed under the [MIT License](LICENSE). (Note: A `LICENSE` file needs to be added).
