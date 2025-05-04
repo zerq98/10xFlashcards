@@ -116,6 +116,113 @@ const generateETag = (
 };
 
 /**
+ * Configuration constants for flashcard limits and validation
+ */
+const FLASHCARD_CONFIG = {
+  limits: {
+    perTopic: 1000, // Maximum flashcards per topic
+    perDay: 200,    // Maximum flashcards created per day per user
+  },
+  content: {
+    maxFrontLength: 500,
+    maxBackLength: 500,
+    minLength: 1,
+  }
+};
+
+/**
+ * More comprehensive validation schema for creating flashcards with detailed error messages
+ */
+const createFlashcardSchema = z.object({
+  front: z.string()
+    .min(FLASHCARD_CONFIG.content.minLength, "Front content is required")
+    .max(FLASHCARD_CONFIG.content.maxFrontLength, `Front content must be ${FLASHCARD_CONFIG.content.maxFrontLength} characters or less`)
+    .transform((val) => val.trim()),
+  back: z.string()
+    .min(FLASHCARD_CONFIG.content.minLength, "Back content is required")
+    .max(FLASHCARD_CONFIG.content.maxBackLength, `Back content must be ${FLASHCARD_CONFIG.content.maxBackLength} characters or less`)
+    .transform((val) => val.trim()),
+});
+
+/**
+ * Enhanced sanitization function for flashcard content
+ * @param content Content to sanitize
+ * @returns Sanitized content
+ */
+const sanitizeFlashcardContent = (content: string): string => {
+  // Basic sanitization - remove dangerous HTML, scripts, iframes, and excessive whitespace
+  return content
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+    .replace(/<[^>]*>/g, '') // Remove any remaining HTML tags
+    .replace(/javascript:/gi, '') // Remove potential JavaScript protocol handlers
+    .replace(/on\w+=/gi, '') // Remove event handlers
+    .replace(/(\r\n|\n|\r){3,}/gm, '\n\n') // Normalize excessive line breaks
+    .trim();
+};
+
+/**
+ * Check if user has reached their flashcard creation limits
+ * @param supabase Supabase client
+ * @param userId User ID
+ * @param topicId Topic ID
+ * @returns Object with boolean indicating if limits are reached and details
+ */
+const checkFlashcardLimits = async (
+  supabase: App.Locals["supabase"],
+  userId: string,
+  topicId: string
+): Promise<{ limitReached: boolean; reason?: string; count?: number; limit?: number }> => {
+  // Check total flashcards per topic limit
+  const { count: topicCount, error: topicCountError } = await supabase
+    .from("flashcards")
+    .select("*", { count: "exact", head: true })
+    .eq("topic_id", topicId)
+    .eq("user_id", userId);
+
+  if (topicCountError) {
+    console.error("Error checking topic flashcard count:", topicCountError);
+    return { limitReached: false }; // Don't block creation if we can't check
+  }
+
+  if (topicCount !== null && topicCount >= FLASHCARD_CONFIG.limits.perTopic) {
+    return { 
+      limitReached: true, 
+      reason: "TOPIC_LIMIT_REACHED",
+      count: topicCount,
+      limit: FLASHCARD_CONFIG.limits.perTopic
+    };
+  }
+
+  // Check daily flashcard creation limit
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const { count: dailyCount, error: dailyCountError } = await supabase
+    .from("flashcards")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .gte("created_at", today.toISOString());
+
+  if (dailyCountError) {
+    console.error("Error checking daily flashcard count:", dailyCountError);
+    return { limitReached: false }; // Don't block creation if we can't check
+  }
+
+  if (dailyCount !== null && dailyCount >= FLASHCARD_CONFIG.limits.perDay) {
+    return { 
+      limitReached: true, 
+      reason: "DAILY_LIMIT_REACHED",
+      count: dailyCount,
+      limit: FLASHCARD_CONFIG.limits.perDay
+    };
+  }
+
+  return { limitReached: false };
+};
+
+/**
  * GET /api/topics/:topicId/flashcards - Retrieves a paginated list of flashcards for a specific topic
  *
  * @param {Object} context - Astro API route context
@@ -502,6 +609,343 @@ export const GET: APIRoute = async ({
 
     console.error(
       `Error in GET /api/topics/:topicId/flashcards - ${totalDuration.toFixed(
+        2
+      )}ms:`,
+      error
+    );
+
+    return new Response(
+      JSON.stringify({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "An unexpected error occurred",
+          details: error instanceof Error ? error.message : String(error),
+        },
+      } satisfies ApiErrorResponse),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+          "Server-Timing": `total;dur=${totalDuration.toFixed(2)}`,
+        },
+      }
+    );
+  }
+};
+
+/**
+ * POST /api/topics/:topicId/flashcards - Creates a new flashcard in a specific topic
+ * 
+ * Request body:
+ * {
+ *   front: string, // Required, 1-500 characters
+ *   back: string   // Required, 1-500 characters
+ * }
+ * 
+ * Success response (201 Created):
+ * {
+ *   data: {
+ *     id: string,
+ *     front: string,
+ *     back: string,
+ *     is_ai_generated: boolean,
+ *     sr_state: object | null,
+ *     created_at: string,
+ *     updated_at: string
+ *   }
+ * }
+ * 
+ * Error responses:
+ * - 400 Bad Request: Invalid input parameters
+ * - 401 Unauthorized: User not authenticated
+ * - 403 Forbidden: User not authorized to access topic or limit reached
+ * - 404 Not Found: Topic not found
+ * - 500 Internal Server Error: Database or other server issues
+ * 
+ * @param {Object} context - Astro API route context
+ * @returns {Response} JSON response with created flashcard or error details
+ */
+export const POST: APIRoute = async ({
+  request,
+  params: routeParams,
+  locals,
+}) => {
+  // Start performance tracking
+  const startTime = performance.now();
+  let dbOperationTime = 0;
+
+  try {
+    // 1. Validate topicId path parameter - handle this first to fail fast
+    const { topicId } = routeParams;
+
+    if (
+      !topicId ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        topicId
+      )
+    ) {
+      return new Response(
+        JSON.stringify({
+          error: {
+            code: "INVALID_TOPIC_ID",
+            message: "Invalid topic ID format",
+            details: "Topic ID must be a valid UUID",
+          },
+        } satisfies ApiErrorResponse),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
+          },
+        }
+      );
+    }
+
+    // 2. Check authentication - using supabase from context.locals per guidelines
+    const supabase = locals.supabase;
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      return new Response(
+        JSON.stringify({
+          error: {
+            code: "UNAUTHORIZED",
+            message: "You must be logged in to create flashcards",
+          },
+        } satisfies ApiErrorResponse),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
+          },
+        }
+      );
+    }
+
+    const userId = session.user.id;
+
+    // 3. Validate and parse request body
+    let requestData: unknown;
+    try {
+      requestData = await request.json();
+    } catch (error) {
+      return new Response(
+        JSON.stringify({
+          error: {
+            code: "INVALID_JSON",
+            message: "Invalid JSON request body",
+            details: error instanceof Error ? error.message : String(error),
+          },
+        } satisfies ApiErrorResponse),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
+          },
+        }
+      );
+    }
+
+    // Validate the request data against our schema
+    const validationResult = createFlashcardSchema.safeParse(requestData);
+
+    if (!validationResult.success) {
+      return new Response(
+        JSON.stringify({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid flashcard data",
+            details: validationResult.error.format(),
+          },
+        } satisfies ApiErrorResponse),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
+          },
+        }
+      );
+    }
+
+    const flashcardData = validationResult.data;
+
+    // 4. Verify topic ownership and existence
+    const { data: topic, error: topicError } = await supabase
+      .from("topics")
+      .select("id")
+      .eq("id", topicId)
+      .eq("user_id", userId)
+      .single();
+
+    if (topicError || !topic) {
+      const status = topicError?.code === "PGRST116" ? 404 : 403;
+      const message =
+        status === 404
+          ? "Topic not found"
+          : "You do not have access to this topic";
+
+      return new Response(
+        JSON.stringify({
+          error: {
+            code: status === 404 ? "TOPIC_NOT_FOUND" : "TOPIC_ACCESS_DENIED",
+            message: message,
+          },
+        } satisfies ApiErrorResponse),
+        {
+          status,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
+          },
+        }
+      );
+    }
+
+    // 5. Check flashcard creation limits
+    const limitCheck = await checkFlashcardLimits(supabase, userId, topicId);
+    if (limitCheck.limitReached) {
+      return new Response(
+        JSON.stringify({
+          error: {
+            code: limitCheck.reason || "LIMIT_REACHED",
+            message: limitCheck.reason === "TOPIC_LIMIT_REACHED" 
+              ? `You have reached the maximum number of flashcards (${limitCheck.limit}) for this topic`
+              : `You have reached the daily limit of ${limitCheck.limit} flashcards`,
+            details: {
+              current: limitCheck.count,
+              limit: limitCheck.limit
+            },
+          },
+        } satisfies ApiErrorResponse),
+        {
+          status: 403,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
+          },
+        }
+      );
+    }
+
+    // 6. Sanitize flashcard content
+    const sanitizedFront = sanitizeFlashcardContent(flashcardData.front);
+    const sanitizedBack = sanitizeFlashcardContent(flashcardData.back);
+
+    // If sanitization removed all content, return an error
+    if (!sanitizedFront.trim() || !sanitizedBack.trim()) {
+      return new Response(
+        JSON.stringify({
+          error: {
+            code: "INVALID_CONTENT",
+            message: "Flashcard content cannot be empty after sanitization",
+            details: {
+              front: !sanitizedFront.trim() ? "Empty after sanitization" : "Valid",
+              back: !sanitizedBack.trim() ? "Empty after sanitization" : "Valid",
+            },
+          },
+        } satisfies ApiErrorResponse),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
+          },
+        }
+      );
+    }
+
+    // 7. Create the flashcard in the database
+    const dbStartTime = performance.now();
+    
+    const { data: createdFlashcard, error: insertError } = await supabase
+      .from("flashcards")
+      .insert([
+        {
+          topic_id: topicId,
+          user_id: userId,
+          front: sanitizedFront,
+          back: sanitizedBack,
+          is_ai_generated: false,
+          was_edited_before_save: false,
+        },
+      ])
+      .select("id, front, back, is_ai_generated, sr_state, created_at, updated_at")
+      .single();
+    
+    dbOperationTime = performance.now() - dbStartTime;
+
+    if (insertError || !createdFlashcard) {
+      console.error("Database insertion error:", insertError);
+      return new Response(
+        JSON.stringify({
+          error: {
+            code: "DATABASE_ERROR",
+            message: "Failed to create flashcard",
+            details: insertError?.message || "Unknown database error",
+          },
+        } satisfies ApiErrorResponse),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
+          },
+        }
+      );
+    }
+
+    // 8. Map the database response to DTO and return
+    const flashcardDTO: FlashcardDTO = {
+      id: createdFlashcard.id,
+      front: createdFlashcard.front,
+      back: createdFlashcard.back,
+      is_ai_generated: createdFlashcard.is_ai_generated,
+      sr_state: createdFlashcard.sr_state as FlashcardDTO["sr_state"],
+      created_at: createdFlashcard.created_at,
+      updated_at: createdFlashcard.updated_at,
+    };
+
+    // Calculate total response time
+    const endTime = performance.now();
+    const totalDuration = endTime - startTime;
+
+    // Log performance metrics for monitoring
+    console.info(
+      `POST /api/topics/${topicId}/flashcards - ${totalDuration.toFixed(
+        2
+      )}ms - DB: ${dbOperationTime.toFixed(2)}ms`
+    );
+
+    // Return created flashcard with status 201
+    return new Response(
+      JSON.stringify({
+        data: flashcardDTO,
+      } satisfies ApiSuccessResponse<FlashcardDTO>),
+      {
+        status: 201,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+          "Server-Timing": `db;dur=${dbOperationTime.toFixed(
+            2
+          )},total;dur=${totalDuration.toFixed(2)}`,
+        },
+      }
+    );
+  } catch (error) {
+    // Calculate error response time for monitoring
+    const endTime = performance.now();
+    const totalDuration = endTime - startTime;
+
+    console.error(
+      `Error in POST /api/topics/:topicId/flashcards - ${totalDuration.toFixed(
         2
       )}ms:`,
       error
