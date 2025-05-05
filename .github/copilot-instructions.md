@@ -46,3 +46,6 @@ use guidelines for Supabase from the [supabase.md](./instructions/supabase.md) f
 
 ## TESTING
 use guidelines for testing from the [testing.md](./instructions/testing.md) file.
+
+## MERMAID DIAGRAMS
+use guidelines for mermaid diagrams from the [mermaid-diagram-auth.md](./instructions/mermaid-diagram-auth.md), [mermaid-diagram-journey.md](./instructions/mermaid-diagram-journey.md) and [mermaid-diagram-ui.md](./instructions/mermaid-diagram-ui.md) files.
