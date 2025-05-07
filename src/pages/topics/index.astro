@@ -1,0 +1,18 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { TopicList } from '../../components/dashboard/TopicList';
+import { NewTopicButton } from '../../components/dashboard/NewTopicButton';
+---
+
+<Layout>
+  <div class="min-h-screen bg-background text-text">
+    <div class="container mx-auto px-4 py-8">
+      <div class="mb-8 flex items-center justify-between">
+        <h1 class="text-3xl font-bold text-text bg-gradient-primary bg-clip-text text-transparent">Twoje Tematy</h1>
+        <NewTopicButton client:load />
+      </div>
+      
+      <TopicList client:load />
+    </div>
+  </div>
+</Layout>

@@ -1,14 +1,26 @@
+---
+import { Sidebar } from '../components/layout/Sidebar';
+import { ToastManager } from '../components/layout/ToastManager';
+import '../styles/global.css';
+---
+
 <!doctype html>
-<html lang="en">
+<html lang="en" class="bg-background text-text">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+		<title>10xFlashcards</title>
 	</head>
-	<body>
-		<slot />
+	<body class="min-h-screen bg-background">
+		<div class="flex min-h-screen">
+			<Sidebar client:load />
+			<main class="flex-1 overflow-y-auto">
+				<slot />
+			</main>
+		</div>
+		<ToastManager client:load />
 	</body>
 </html>
 

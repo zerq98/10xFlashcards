@@ -64,3 +64,19 @@
 #### UI KIT
 
 - use guidelines for shadcn/ui from the [ui-shadcn.md](./ui-shadcn.md) file.
+
+### THEME
+- Use a consistent color palette across the application for branding and user experience
+- Use dark mode only
+- Make all components responsive and mobile-friendly
+- Use gradient in buttons background, borders, and titles
+- Use shadows in buttons and cards to create depth and separation from the background
+- Use rounded corners for buttons, cards, and other UI elements to create a modern look
+- Colors: 
+  - Primary: #02de0a
+  - Secondary: #0602de
+  - Accent: #6002db
+  - Background: #131924
+  - Text: #dddddd
+  - Shadow: rgba(0, 0, 0, 0.1) for light shadows, rgba(0, 0, 0, 0.2) for dark shadows
+  - Gradient: linear-gradient(135deg, #02de0a 0%, #0602de 33%, #6002db 100%)
