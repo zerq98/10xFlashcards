@@ -23,7 +23,7 @@ export const Sidebar = () => {
         {/* Logo */}
         <div className="p-4 border-b border-gray-700">
           <a href="/" className="flex items-center">
-            <span className="text-xl font-bold bg-gradient-primary text-transparent bg-clip-text">
+            <span className="text-xl font-bold bg-gradient-to-r from-primary via-secondary-400 to-accent-200 text-transparent bg-clip-text">
               10xFlashcards
             </span>
           </a>
@@ -56,7 +56,7 @@ export const Sidebar = () => {
         {/* User section */}
         <div className="p-4 border-t border-gray-700">
           <button
-            className="w-full flex items-center px-4 py-2 rounded-md text-text hover:bg-gray-800 transition-colors"
+            className="w-full flex items-center px-4 py-2 rounded-md text-text hover:bg-gray-800 transition-colors cursor-pointer"
             onClick={() => {
               // Will be implemented with auth
               console.log('Logout clicked');

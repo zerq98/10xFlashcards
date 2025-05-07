@@ -4,13 +4,173 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* Primary - Green (#02de0a) */
+  --color-primary-0: var(--primary-0);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary: var(--primary);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+  --color-primary-1000: var(--primary-1000);
+
+  /* Secondary - Blue (#0602de) */
+  --color-secondary-0: var(--secondary-0);
+  --color-secondary-100: var(--secondary-100);
+  --color-secondary-200: var(--secondary-200);
+  --color-secondary-300: var(--secondary-300);
+  --color-secondary-400: var(--secondary-400);
+  --color-secondary: var(--secondary);
+  --color-secondary-600: var(--secondary-600);
+  --color-secondary-700: var(--secondary-700);
+  --color-secondary-800: var(--secondary-800);
+  --color-secondary-900: var(--secondary-900);
+  --color-secondary-1000: var(--secondary-1000);
+
+  /* Accent - Purple (#6002db) */
+  --color-accent-0: var(--accent-0);
+  --color-accent-100: var(--accent-100);
+  --color-accent-200: var(--accent-200);
+  --color-accent-300: var(--accent-300);
+  --color-accent-400: var(--accent-400);
+  --color-accent: var(--accent);
+  --color-accent-600: var(--accent-600);
+  --color-accent-700: var(--accent-700);
+  --color-accent-800: var(--accent-800);
+  --color-accent-900: var(--accent-900);
+  --color-accent-1000: var(--accent-1000);
+
+  /* Grays - from Text (#dddddd) to Background (#131924) */
+  --color-grays-0: var(--grays-0);
+  --color-grays-100: var(--grays-100);
+  --color-grays-200: var(--grays-200);
+  --color-grays-300: var(--grays-300);
+  --color-grays-400: var(--grays-400);
+  --color-grays-500: var(--grays-500);
+  --color-grays-600: var(--grays-600);
+  --color-grays-700: var(--grays-700);
+  --color-grays-800: var(--grays-800);
+  --color-grays-900: var(--grays-900);
+  --color-grays-1000: var(--grays-1000);
 }
 
 :root {
+  --primary-0: #e6fff2;
+  --primary-100: #c1ffe1;
+  --primary-200: #9cffd0;
+  --primary-300: #77ffc0;
+  --primary-400: #52ffaf;
+  --primary: #02de0a;
+  --primary-600: #00b208;
+  --primary-700: #008606;
+  --primary-800: #006605;
+  --primary-900: #004603;
+  --primary-1000: #003302;
+
+  /* Secondary - Blue (#0602de) */
+  --secondary-0: #f0f0ff;
+  --secondary-100: #d9d9ff;
+  --secondary-200: #c2c2ff;
+  --secondary-300: #abacff;
+  --secondary-400: #8788ff;
+  --secondary: #0602de;
+  --secondary-600: #0501b7;
+  --secondary-700: #04018f;
+  --secondary-800: #030168;
+  --secondary-900: #020140;
+  --secondary-1000: #01001a;
+
+  /* Accent - Purple (#6002db) */
+  --accent-0: #f5f0ff;
+  --accent-100: #e5d9ff;
+  --accent-200: #d5c2ff;
+  --accent-300: #c5abff;
+  --accent-400: #b594ff;
+  --accent: #6002db;
+  --accent-600: #4e01b4;
+  --accent-700: #3c018d;
+  --accent-800: #2a0166;
+  --accent-900: #18003f;
+  --accent-1000: #06001a;
+
+  /* Grays - from Text (#dddddd) to Background (#131924) */
+  --grays-0: #dddddd;
+  --grays-100: #c4c4c9;
+  --grays-200: #acacb6;
+  --grays-300: #9494a3;
+  --grays-400: #7c7c90;
+  --grays-500: #64647d;
+  --grays-600: #4b4c69;
+  --grays-700: #353756;
+  --grays-800: #282942;
+  --grays-900: #1e202f;
+  --grays-1000: #131924;
 }
 
 .dark {
+  --primary-0: #e6fff2;
+  --primary-100: #c1ffe1;
+  --primary-200: #9cffd0;
+  --primary-300: #77ffc0;
+  --primary-400: #52ffaf;
+  --primary: #02de0a;
+  --primary-600: #00b208;
+  --primary-700: #008606;
+  --primary-800: #006605;
+  --primary-900: #004603;
+  --primary-1000: #003302;
+
+  /* Secondary - Blue (#0602de) */
+  --secondary-0: #f0f0ff;
+  --secondary-100: #d9d9ff;
+  --secondary-200: #c2c2ff;
+  --secondary-300: #abacff;
+  --secondary-400: #8788ff;
+  --secondary: #0602de;
+  --secondary-600: #0501b7;
+  --secondary-700: #04018f;
+  --secondary-800: #030168;
+  --secondary-900: #020140;
+  --secondary-1000: #01001a;
+
+  /* Accent - Purple (#6002db) */
+  --accent-0: #f5f0ff;
+  --accent-100: #e5d9ff;
+  --accent-200: #d5c2ff;
+  --accent-300: #c5abff;
+  --accent-400: #b594ff;
+  --accent: #6002db;
+  --accent-600: #4e01b4;
+  --accent-700: #3c018d;
+  --accent-800: #2a0166;
+  --accent-900: #18003f;
+  --accent-1000: #06001a;
+
+  /* Grays - from Text (#dddddd) to Background (#131924) */
+  --grays-0: #dddddd;
+  --grays-100: #c4c4c9;
+  --grays-200: #acacb6;
+  --grays-300: #9494a3;
+  --grays-400: #7c7c90;
+  --grays-500: #64647d;
+  --grays-600: #4b4c69;
+  --grays-700: #353756;
+  --grays-800: #282942;
+  --grays-900: #1e202f;
+  --grays-1000: #131924;
 }
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+    overflow-y: scroll;
+  }
+
+  * {
+  }
+  body {
+  }
 }
