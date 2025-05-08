@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NewTopicModal } from './NewTopicModal';
 import { useTopicsStore } from '../../store/useTopicsStore';
+import { Plus } from 'lucide-react';
 import type { TopicDTO } from '../../types';
 
 export const NewTopicButton = () => {
@@ -16,25 +17,17 @@ export const NewTopicButton = () => {
   };
   
   return (
-    <>
-      <button
+    <>      <button
         onClick={() => setIsModalOpen(true)}
-        className="flex items-center rounded-md bg-gradient-primary px-4 py-2 text-white shadow-light transition-shadow hover:shadow-medium"
+        className="flex items-center rounded-lg bg-gradient-primary px-4 py-2 text-white shadow-light transition-all hover:shadow-medium cursor-pointer group relative"
         aria-label="Utwórz nowy temat"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="mr-2 h-5 w-5"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path
-            fillRule="evenodd"
-            d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-            clipRule="evenodd"
-          />
-        </svg>
-        Nowy Temat
+        <span className="relative z-10 mr-2">
+          <Plus className="h-5 w-5 text-white group-hover:text-primary transition-all duration-300" />
+        </span>
+        <span className="relative z-10 text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-primary group-hover:via-secondary-400 group-hover:to-accent-200 transition-all duration-300">
+          Nowy Temat
+        </span>
       </button>
       
       {isModalOpen && (

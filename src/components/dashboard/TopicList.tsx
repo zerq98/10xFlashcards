@@ -23,7 +23,7 @@ export const TopicList = () => {
       <div className="p-8 text-center">
         <p className="mb-4 text-red-500">{error}</p>
         <button 
-          className="rounded-md bg-gradient-primary px-4 py-2 text-white shadow-light hover:shadow-medium"
+          className="rounded-md px-4 py-2 cursor-pointer text-white hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-primary hover:via-secondary-400 hover:to-accent-200 transition-all duration-300 shadow-light hover:shadow-medium"
           onClick={() => fetchTopics()}
         >
           Spróbuj ponownie
