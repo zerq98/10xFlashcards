@@ -18,10 +18,16 @@ export const Sidebar = () => {
   };
 
   return (
-    <aside className="h-screen w-64 flex-shrink-0 bg-background border-r border-gray-700 hidden md:flex">
+    <aside className="h-screen w-64 flex-shrink-0 bg-grays-950 relative hidden md:flex">
+      {/* Right gradient border */}
+      <div className="absolute right-0 top-0 w-[1px] h-full bg-gradient-to-r from-secondary-400/50 to-accent-200/50"></div>
+      
       <div className="w-full flex flex-col">
         {/* Logo */}
-        <div className="p-4 border-b border-gray-700">
+        <div className="p-4 relative">
+          {/* Bottom gradient border for logo section */}
+          <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-primary/50 via-secondary-400/50 to-accent-200/50"></div>
+          
           <a href="/" className="flex items-center">
             <span className="text-xl font-bold bg-gradient-to-r from-primary via-secondary-400 to-accent-200 text-transparent bg-clip-text">
               10xFlashcards
@@ -39,7 +45,7 @@ export const Sidebar = () => {
                   className={`flex items-center px-4 py-2 rounded-md transition-colors ${
                     isActive(item.href)
                       ? 'bg-primary bg-opacity-10 text-primary'
-                      : 'text-text hover:bg-gray-800'
+                      : 'text-text hover:bg-gray-900'
                   }`}
                   aria-current={isActive(item.href) ? 'page' : undefined}
                 >
@@ -54,9 +60,12 @@ export const Sidebar = () => {
         </nav>
 
         {/* User section */}
-        <div className="p-4 border-t border-gray-700">
+        <div className="p-4 relative">
+          {/* Top gradient border for user section */}
+          <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-primary/50 via-secondary-400/50 to-accent-200/50"></div>
+          
           <button
-            className="w-full flex items-center px-4 py-2 rounded-md text-text hover:bg-gray-800 transition-colors cursor-pointer"
+            className="w-full flex items-center px-4 py-2 rounded-md text-text hover:bg-gray-900 transition-colors cursor-pointer"
             onClick={() => {
               // Will be implemented with auth
               console.log('Logout clicked');

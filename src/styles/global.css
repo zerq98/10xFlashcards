@@ -54,6 +54,7 @@
   --color-grays-700: var(--grays-700);
   --color-grays-800: var(--grays-800);
   --color-grays-900: var(--grays-900);
+  --color-grays-950: var(--grays-950);
   --color-grays-1000: var(--grays-1000);
 }
 
@@ -107,6 +108,7 @@
   --grays-700: #353756;
   --grays-800: #282942;
   --grays-900: #1e202f;
+  --grays-950: #181c2a;
   --grays-1000: #131924;
 }
 
@@ -160,6 +162,7 @@
   --grays-700: #353756;
   --grays-800: #282942;
   --grays-900: #1e202f;
+  --grays-950: #181c2a;
   --grays-1000: #131924;
 }
 
