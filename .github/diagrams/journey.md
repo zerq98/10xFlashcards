@@ -31,6 +31,101 @@
 <mermaid_diagram>
 ```mermaid
 stateDiagram-v2
+    [*] --> StronaGlowna
+    
+    StronaGlowna --> FormularzLogowania: Kliknięcie Zaloguj
+    StronaGlowna --> FormularzRejestracji: Kliknięcie Zarejestruj
+    
+    state "Proces Logowania" as Logowanie {
+        FormularzLogowania --> WalidacjaLogowania: Przesłanie formularza
+        
+        state if_logowanie <<choice>>
+        WalidacjaLogowania --> if_logowanie
+        if_logowanie --> PanelUzytkownika: Dane poprawne
+        if_logowanie --> FormularzLogowania: Dane błędne
+    
+        FormularzLogowania --> FormularzZapomniane: Kliknięcie "Zapomniałem hasła"
+    }
+    
+    state "Proces Rejestracji" as Rejestracja {
+        FormularzRejestracji --> WalidacjaRejestracji: Przesłanie formularza
+        
+        state if_rejestracja <<choice>>
+        WalidacjaRejestracji --> if_rejestracja
+        if_rejestracja --> PotwierdzEmail: Dane poprawne
+        if_rejestracja --> FormularzRejestracji: Dane błędne
+        
+        PotwierdzEmail --> FormularzLogowania: Kliknięcie w link w mailu
+    }
+    
+    state "Odzyskiwanie Hasła" as OdzyskiwanieHasla {
+        FormularzZapomniane --> WyslanieLinku: Przesłanie email
+        
+        WyslanieLinku --> PotwierdzenieWyslaniaLinku
+        
+        PotwierdzenieWyslaniaLinku --> StronaResetuHasla: Kliknięcie w link w mailu
+        
+        StronaResetuHasla --> WalidacjaTokenu
+        
+        state if_token <<choice>>
+        WalidacjaTokenu --> if_token
+        if_token --> FormularzNowegoHasla: Token prawidłowy
+        if_token --> FormularzZapomniane: Token wygasł
+        
+        FormularzNowegoHasla --> WalidacjaNowegoHasla: Przesłanie formularza
+        
+        state if_haslo <<choice>>
+        WalidacjaNowegoHasla --> if_haslo
+        if_haslo --> PotwierdzenieZmianyHasla: Hasło spełnia wymogi
+        if_haslo --> FormularzNowegoHasla: Hasło nie spełnia wymogów
+        
+        PotwierdzenieZmianyHasla --> FormularzLogowania
+    }
+    
+    state "Panel Użytkownika" as PanelUzytkownika {
+        [*] --> KontrolaDostepu
+        
+        state if_dostep <<choice>>
+        KontrolaDostepu --> if_dostep
+        if_dostep --> MenuUzytkownika: Token ważny
+        if_dostep --> FormularzLogowania: Token nieważny
+        
+        MenuUzytkownika --> FormularzZmianyHasla: Wybór "Zmiana hasła"
+        MenuUzytkownika --> FormularzUsuniecia: Wybór "Usuń konto"
+        
+        state "Zmiana Hasła" as ZmianaHasla {
+            FormularzZmianyHasla --> WalidacjaZmianyHasla: Przesłanie formularza
+            
+            state if_zmiana <<choice>>
+            WalidacjaZmianyHasla --> if_zmiana
+            if_zmiana --> PotwierdzenieZmiany: Dane poprawne
+            if_zmiana --> FormularzZmianyHasla: Dane błędne
+            
+            PotwierdzenieZmiany --> MenuUzytkownika
+        }
+        
+        state "Usunięcie Konta" as UsuniecieKonta {
+            FormularzUsuniecia --> OknoPotwierdzenia: Przesłanie formularza
+            
+            state if_potwierdzone <<choice>>
+            OknoPotwierdzenia --> if_potwierdzone
+            if_potwierdzone --> WeryfikacjaHaslaUsuniecia: Potwierdzono
+            if_potwierdzone --> FormularzUsuniecia: Anulowano
+            
+            state if_haslo_ok <<choice>>
+            WeryfikacjaHaslaUsuniecia --> if_haslo_ok
+            if_haslo_ok --> PotwierdzenieUsuniecia: Hasło poprawne
+            if_haslo_ok --> FormularzUsuniecia: Hasło błędne
+            
+            PotwierdzenieUsuniecia --> StronaGlowna
+        }
+    }
+    
+    PanelUzytkownika --> Wylogowanie: Kliknięcie "Wyloguj"
+    Wylogowanie --> StronaGlowna
+```
+```mermaid
+stateDiagram-v2
 [*] --> StronaGlowna
 StronaGlowna --> Rejestracja
 StronaGlowna --> Logowanie

@@ -29,6 +29,76 @@
 </architecture_analysis>
 
 <mermaid_diagram>
+```mermaid
+flowchart TD
+    %% Layouty główne
+    L1[Layout.astro] --> S1[Sidebar.tsx]
+    L1 --> M1[MobileNavigation.tsx]
+    L1 --> MB[Main Content]
+    
+    L2[AuthLayout.astro] --> AB[Auth Content]
+    
+    %% Strony Astro
+    subgraph "Strony Autoryzacji"
+        R1[register.astro] --> RF[RegisterForm.tsx]
+        L3[login.astro] --> LF[LoginForm.tsx]
+        FP[forgot-password.astro] --> FPF[ForgotPasswordForm.tsx]
+        RP["reset-password/[token].astro"] --> RPF[ResetPasswordForm.tsx]
+        CP["account/change-password.astro"] --> CPF[ChangePasswordForm.tsx]
+        DA["account/delete-account.astro"] --> DAF[DeleteAccountForm.tsx]
+    end
+    
+    %% Komponenty autoryzacji
+    subgraph "Komponenty React Autoryzacji"
+        RF --> V1[Walidacja Email]
+        RF --> V2[Walidacja Hasła]
+        RF --> PS[PasswordStrength]
+        
+        LF --> V1
+        FPF --> V1
+        
+        RPF --> V2
+        RPF --> PS
+        
+        CPF --> V2
+        CPF --> PS
+        
+        DAF --> D1[Dialog potwierdzenia]
+    end
+    
+    %% Middleware i API
+    subgraph "System Autoryzacji"
+        MW[Middleware] --> PR[protectRoute]
+        MW --> RT[refreshToken]
+        
+        API["API (/api/auth/)"] --> MW
+        
+        PR --> IS[isSession]
+        RT --> IS
+    end
+    
+    %% Powiązania funkcji
+    L3 -.-> API
+    R1 -.-> API
+    FP -.-> API
+    RP -.-> API
+    CP -.-> API
+    DA -.-> API
+    
+    %% Nawigacja
+    S1 --> CP
+    M1 --> CP
+    M1 --> DA
+    
+    %% Stylizacja
+    classDef page fill:#131924,stroke:#0602de,stroke-width:2px
+    classDef component fill:#1a2233,stroke:#02de0a,stroke-width:2px
+    classDef middleware fill:#1a2233,stroke:#6002db,stroke-width:2px
+    
+    class R1,L3,FP,RP,CP,DA,L1,L2 page
+    class RF,LF,FPF,RPF,CPF,DAF,S1,M1,V1,V2,PS,D1 component
+    class MW,PR,RT,IS,API middleware
+```
 flowchart TD
     subgraph "Layouts"
         AuthLayout["AuthLayout.astro"]

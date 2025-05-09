@@ -1,0 +1,33 @@
+---
+import AuthLayout from '../layouts/AuthLayout.astro';
+import { RegisterForm } from '../components/auth/RegisterForm';
+---
+
+<AuthLayout title="10xFlashcards - Rejestracja">
+  <div class="auth-container">
+    <h1 class="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-primary via-secondary-400 to-accent-200 text-transparent bg-clip-text">
+      Rejestracja
+    </h1>
+    
+    <div class="w-full bg-gray-900/50 rounded-lg p-6 shadow-lg border border-gray-800">
+      <RegisterForm client:load />
+      
+      <div class="mt-6 text-center">
+        <p class="text-sm">
+          Masz już konto? 
+          <a href="/login" class="text-primary hover:underline transition-colors">
+            Zaloguj się
+          </a>
+        </p>
+      </div>
+    </div>
+  </div>
+</AuthLayout>
+
+<style>
+  .auth-container {
+    width: 100%;
+    max-width: 450px;
+    margin: 0 auto;
+  }
+</style>

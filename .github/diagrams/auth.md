@@ -32,6 +32,94 @@
 </authentication_analysis>
 
 <mermaid_diagram>
+```mermaid
+sequenceDiagram
+    autonumber
+    
+    participant Browser as Przeglądarka
+    participant Middleware as Middleware
+    participant API as Astro API
+    participant Auth as Supabase Auth
+    
+    %% Proces rejestracji
+    Note over Browser,Auth: Proces Rejestracji
+    Browser->>API: Wypełnienie formularza rejestracji
+    API->>API: Walidacja danych
+    API->>Auth: Rejestracja użytkownika
+    Auth-->>API: Utworzenie konta użytkownika
+    API-->>Browser: Informacja o wysłaniu emaila z weryfikacją
+    Auth->>Browser: Email z linkiem weryfikacyjnym
+    Browser->>Auth: Kliknięcie w link weryfikacyjny
+    Auth-->>Browser: Potwierdzenie email, przekierowanie do logowania
+    
+    %% Proces logowania
+    Note over Browser,Auth: Proces Logowania
+    Browser->>API: Wypełnienie formularza logowania
+    API->>Auth: Żądanie uwierzytelnienia
+    Auth-->>API: Weryfikacja danych logowania
+    alt Logowanie udane
+        Auth->>API: Zwrócenie tokenu dostępu i odświeżania
+        API->>Middleware: Zapisanie tokenu w cookies
+        API-->>Browser: Przekierowanie do strony głównej
+    else Niepoprawne dane
+        Auth-->>API: Błąd uwierzytelniania
+        API-->>Browser: Wyświetlenie komunikatu o błędzie
+    end
+    
+    %% Proces weryfikacji sesji
+    Note over Browser,Auth: Weryfikacja Sesji
+    Browser->>Middleware: Żądanie dostępu do chronionej strony
+    Middleware->>Middleware: Sprawdzenie tokenu z cookies
+    alt Token prawidłowy i ważny
+        Middleware->>API: Przekazanie żądania
+        API-->>Browser: Zwrócenie chronionych danych
+    else Token wygasł
+        Middleware->>Auth: Żądanie odświeżenia tokenu
+        Auth-->>Middleware: Nowy token dostępu
+        Middleware->>API: Przekazanie żądania z nowym tokenem
+        API-->>Browser: Zwrócenie chronionych danych
+    else Brak tokenu lub nieprawidłowy
+        Middleware-->>Browser: Przekierowanie do strony logowania
+    end
+    
+    %% Proces odzyskiwania hasła
+    Note over Browser,Auth: Odzyskiwanie Hasła
+    Browser->>API: Żądanie resetowania hasła (email)
+    API->>Auth: Inicjowanie resetowania hasła
+    Auth->>Browser: Email z tokenem resetowania hasła
+    Browser->>API: Kliknięcie w link z tokenem
+    API->>API: Walidacja tokenu resetowania
+    alt Token prawidłowy
+        Browser->>API: Formularz z nowym hasłem
+        API->>Auth: Zmiana hasła
+        Auth-->>API: Potwierdzenie zmiany hasła
+        API-->>Browser: Informacja o sukcesie
+    else Token nieprawidłowy lub wygasł
+        API-->>Browser: Informacja o błędzie
+    end
+    
+    %% Zmiana hasła
+    Note over Browser,Auth: Zmiana Hasła
+    Browser->>Middleware: Żądanie dostępu do strony zmiany hasła
+    Middleware->>Middleware: Weryfikacja tokenu sesji
+    Middleware-->>Browser: Dostęp do strony zmiany hasła
+    Browser->>API: Formularz ze starym i nowym hasłem
+    API->>Auth: Weryfikacja starego i zmiana na nowe hasło
+    Auth-->>API: Potwierdzenie zmiany hasła
+    API-->>Browser: Informacja o sukcesie
+    
+    %% Usuwanie konta
+    Note over Browser,Auth: Usuwanie Konta
+    Browser->>Middleware: Żądanie dostępu do strony usuwania konta
+    Middleware->>Middleware: Weryfikacja tokenu sesji
+    Middleware-->>Browser: Dostęp do strony usuwania konta
+    Browser->>API: Potwierdzenie usunięcia z hasłem
+    API->>Auth: Weryfikacja hasła
+    API->>Auth: Żądanie usunięcia konta
+    Auth-->>API: Potwierdzenie usunięcia konta
+    API->>Middleware: Usunięcie tokenu z cookies
+    API-->>Browser: Informacja o usunięciu, przekierowanie
+```
 sequenceDiagram
   autonumber
   participant Browser

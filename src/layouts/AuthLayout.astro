@@ -1,0 +1,56 @@
+---
+// Layout dla stron autoryzacji (bez głównego NavBar)
+interface Props {
+  title?: string;
+}
+
+const { title = '10xFlashcards - Autoryzacja' } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body class="bg-background text-text min-h-screen">
+    <div class="min-h-screen flex flex-col">
+      <!-- Logo w górnej części ekranu -->
+      <header class="w-full p-4">
+        <div class="container mx-auto">
+          <a href="/" class="flex items-center">
+            <span class="text-xl font-bold bg-gradient-to-r from-primary via-secondary-400 to-accent-200 text-transparent bg-clip-text">
+              10xFlashcards
+            </span>
+          </a>
+        </div>
+      </header>
+
+      <!-- Główna zawartość strony -->
+      <main class="flex-1 flex items-center justify-center p-4">
+        <div class="w-full max-w-md">
+          <slot />
+        </div>
+      </main>
+
+      <!-- Stopka -->
+      <footer class="p-4 text-center text-text opacity-70 text-sm">
+        <div class="container mx-auto">
+          <p>&copy; {new Date().getFullYear()} 10xFlashcards. Wszelkie prawa zastrzeżone.</p>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Skrypty i style -->
+    <style is:global>
+      body {
+        font-family: Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif;
+        background-color: #131924; /* Background color z wytycznych */
+        color: #dddddd; /* Text color z wytycznych */
+      }
+    </style>
+  </body>
+</html>
