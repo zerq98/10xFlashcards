@@ -1,4 +1,6 @@
 ---
+import { ToastManager } from '../components/layout/ToastManager';
+import '../styles/global.css';
 // Layout dla stron autoryzacji (bez głównego NavBar)
 interface Props {
   title?: string;
@@ -16,13 +18,13 @@ const { title = '10xFlashcards - Autoryzacja' } = Astro.props;
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
   </head>
-  <body class="bg-background text-text min-h-screen">
+  <body class="bg-background text-text min-h-screen h-screen">
     <div class="min-h-screen flex flex-col">
       <!-- Logo w górnej części ekranu -->
-      <header class="w-full p-4">
+      <header class="w-full p-10">
         <div class="container mx-auto">
-          <a href="/" class="flex items-center">
-            <span class="text-xl font-bold bg-gradient-to-r from-primary via-secondary-400 to-accent-200 text-transparent bg-clip-text">
+          <a href="/" class="flex items-center justify-center">
+            <span class="w-fit text-3xl font-bold bg-gradient-to-r from-primary via-secondary-400 to-accent-200 text-transparent bg-clip-text">
               10xFlashcards
             </span>
           </a>

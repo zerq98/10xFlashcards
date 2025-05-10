@@ -2,6 +2,11 @@
 import Layout from '../../layouts/Layout.astro';
 import { TopicList } from '../../components/dashboard/TopicList';
 import { NewTopicButton } from '../../components/dashboard/NewTopicButton';
+import { protectRoute } from '../../middleware';
+
+// Ochrona tej strony - tylko dla zalogowanych użytkowników
+export const prerender = false;
+export const onRequest = protectRoute;
 ---
 
 <Layout>
