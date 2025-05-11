@@ -1,23 +1,25 @@
-import React, { useState } from 'react';
-import { NewTopicModal } from './NewTopicModal';
-import { useTopicsStore } from '../../store/useTopicsStore';
-import { Plus } from 'lucide-react';
-import type { TopicDTO } from '../../types';
+import React, { useState } from "react";
+import { NewTopicModal } from "./NewTopicModal";
+import { useTopicsStore } from "../../store/useTopicsStore";
+import { Plus } from "lucide-react";
+import type { TopicDTO } from "../../types";
 
 export const NewTopicButton = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { addTopic } = useTopicsStore();
-  
+
   const handleTopicCreated = (topic: TopicDTO) => {
     addTopic(topic);
     setIsModalOpen(false);
-    
+
     // Navigate to the newly created topic
     window.location.href = `/topics/${topic.id}`;
   };
-  
+
   return (
-    <>      <button
+    <>
+      {" "}
+      <button
         onClick={() => setIsModalOpen(true)}
         className="flex items-center rounded-lg bg-gradient-primary px-4 py-2 text-white shadow-light transition-all hover:shadow-medium cursor-pointer group relative"
         aria-label="Utwórz nowy temat"
@@ -29,7 +31,6 @@ export const NewTopicButton = () => {
           Nowy Temat
         </span>
       </button>
-      
       {isModalOpen && (
         <NewTopicModal
           isOpen={isModalOpen}

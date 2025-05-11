@@ -1,7 +1,8 @@
 ---
+import { sequence } from "astro/middleware";
 import Welcome from "../components/Welcome.astro";
 import Layout from "../layouts/Layout.astro";
-import { loadSession, protectRoute } from "../middleware";
+import { loadSession } from "../middleware";
 
 // Upewniamy się, że ta strona jest zawsze renderowana na serwerze
 export const prerender = false;
