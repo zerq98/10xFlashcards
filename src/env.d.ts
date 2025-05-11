@@ -26,8 +26,6 @@ declare global {
       session: Session | null;
       // Informacje o użytkowniku (dla wygody)
       user: User | null;
-      // Token CSRF do ochrony przed atakami CSRF
-      csrfToken?: string;
     }
   }
 }

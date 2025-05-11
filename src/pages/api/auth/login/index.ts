@@ -154,21 +154,7 @@ const setSessionCookies = (
   return response;
 };
 
-/**
- * Sets CSRF token cookie
- * @param response - Response object
- * @returns Updated Response with CSRF token cookie
- */
-const setCsrfToken = (response: Response): Response => {
-  const csrfToken = crypto.randomUUID();
-  const expiryDate = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-  
-  response.headers.append('Set-Cookie', 
-    `csrf_token=${csrfToken}; Path=/; Secure; SameSite=Strict; Expires=${expiryDate.toUTCString()}`
-  );
 
-  return response;
-};
 
 /**
  * POST /api/auth/login - Authenticates a user and creates a session
@@ -261,12 +247,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }
       }
     );
-    
-    // 6. Set session cookies
+      // 6. Set session cookies
     response = setSessionCookies(response, authResponse.session);
-    
-    // 7. Set CSRF token for additional security
-    response = setCsrfToken(response);
     
     return response;
     

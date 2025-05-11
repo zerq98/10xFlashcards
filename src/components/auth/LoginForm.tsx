@@ -2,18 +2,6 @@ import React, { useState, useId, useEffect } from "react";
 import { z } from "zod";
 import type { ApiErrorResponse, LoginRequestDTO } from "../../types";
 
-// Funkcja do pobierania tokena CSRF z ciasteczek
-function getCsrfToken(): string | null {
-  const cookies = document.cookie.split(";");
-  for (const cookie of cookies) {
-    const [name, value] = cookie.trim().split("=");
-    if (name === "csrf_token") {
-      return value;
-    }
-  }
-  return null;
-}
-
 // Walidacja emaila przy pomocy podstawowego wyrażenia regularnego
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -110,19 +98,13 @@ export const LoginForm = () => {
       // Generyczny komunikat błędu zamiast szczegółowych błędów walidacji
       setError("Niepoprawny email lub hasło");
       return;
-    }
-
-    setIsLoading(true);
+    }    setIsLoading(true);
     try {
-      // Pobieramy token CSRF z ciasteczka (dodane w naszym middleware)
-      const csrfToken = getCsrfToken();
       // Wywołanie API do logowania
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // Dodajemy token CSRF do nagłówka dla zabezpieczenia
-          "X-CSRF-Token": csrfToken || "",
         },
         body: JSON.stringify({
           email: trimmedEmail,
@@ -132,19 +114,12 @@ export const LoginForm = () => {
       });
 
       const data = await response.json();
-      console.log("Login response:", response);
-      if (!response.ok) {
+      console.log("Login response:", response);      if (!response.ok) {
         // Obsługa błędów z API
         const errorResponse = data as ApiErrorResponse;
         // Dla błędów związanych z uwierzytelnieniem (401) używamy generycznego komunikatu
         if (response.status === 401) {
           setError("Niepoprawny email lub hasło");
-        }
-        // Obsługa błędów związanych z CSRF (403)
-        else if (response.status === 403) {
-          // Odśwież stronę, aby pobrać nowy token CSRF
-          window.location.reload();
-          return;
         }
         // Jedyny wyjątek: rate limiting - możemy poinformować użytkownika
         else if (response.status === 429) {

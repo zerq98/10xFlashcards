@@ -76,39 +76,7 @@ const validateRegisterRequest = (data: unknown): RegisterRequestDTO => {
   }
 };
 
-/**
- * Validates email availability by checking if it already exists in Auth
- * @param supabase - Supabase client
- * @param email - Email to check
- * @returns Promise resolving to true if email is available
- * @throws Error if email is already in use
- */
-const validateEmailAvailability = async (
-  supabase: any,
-  email: string
-): Promise<boolean> => {
-  // Use Supabase's admin functions to check if user exists
-  const { data, error } = await supabase.auth.admin.listUsers({
-    filter: { email }
-  });
-  
-  if (error) {
-    throw {
-      code: "EMAIL_VALIDATION_ERROR",
-      message: "Failed to validate email availability",
-      details: error.message
-    };
-  }
-  
-  if (data && data.users && data.users.length > 0) {
-    throw {
-      code: "EMAIL_ALREADY_EXISTS",
-      message: "This email is already registered",
-    };
-  }
-  
-  return true;
-};
+// Email uniqueness is automatically checked by Supabase Auth during sign-up
 
 /**
  * Authentication service class for user registration
@@ -137,6 +105,7 @@ class AuthService {
     });
 
     if (error) {
+      console.log("Registration error:", error.message);
       // Handle different registration errors
       if (error.status === 400) {
         throw {
@@ -194,12 +163,11 @@ class ProfileService {
    * Creates a new user profile after registration
    * @param command - Profile initialization command with userId and email
    * @returns Promise resolving when profile is created
-   */
-  async createProfile(command: InitializeProfileCommand): Promise<void> {
+   */  async createProfile(command: InitializeProfileCommand): Promise<void> {
     const { error } = await this.supabase
       .from('profiles')
       .insert({
-        id: command.userId,
+        user_id: command.userId,
         email: command.email,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -240,21 +208,7 @@ const setSessionCookies = (
   return response;
 };
 
-/**
- * Sets CSRF token cookie
- * @param response - Response object
- * @returns Updated Response with CSRF token cookie
- */
-const setCsrfToken = (response: Response): Response => {
-  const csrfToken = crypto.randomUUID();
-  const expiryDate = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-  
-  response.headers.append('Set-Cookie', 
-    `csrf_token=${csrfToken}; Path=/; Secure; SameSite=Strict; Expires=${expiryDate.toUTCString()}`
-  );
 
-  return response;
-};
 
 /**
  * Executes the registration process within a transaction
@@ -311,6 +265,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       const rawData = await request.json();
       requestData = validateRegisterRequest(rawData);
     } catch (error: any) {
+      console.error("Validation error:", error);
       return new Response(
         JSON.stringify({
           error: {
@@ -328,30 +283,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }
       );
     }
+    
+    // Email uniqueness is automatically checked by Supabase Auth during sign-up
 
-    // 2. Check if email is already registered
-    try {
-      await validateEmailAvailability(locals.supabase, requestData.email);
-    } catch (error: any) {
-      return new Response(
-        JSON.stringify({
-          error: {
-            code: error.code || "EMAIL_VALIDATION_ERROR",
-            message: error.message || "Email validation failed",
-            details: error.details
-          }
-        } satisfies ApiErrorResponse),
-        {
-          status: error.code === "EMAIL_ALREADY_EXISTS" ? 409 : 400,
-          headers: {
-            "Content-Type": "application/json",
-            "Cache-Control": "no-store"
-          }
-        }
-      );
-    }
-
-    // 3. Register user and create profile
+    // 2. Register user and create profile
     let authResponse: AuthResponseDTO;
     try {
       authResponse = await executeRegistrationTransaction(locals.supabase, {
@@ -359,6 +294,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         password: requestData.password
       });
     } catch (error: any) {
+      console.log("Registration error:", error);
       // Determine appropriate status code based on error
       let status = 500;
       if (error.code === "EMAIL_ALREADY_EXISTS") status = 409;
@@ -382,7 +318,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // 4. Create response with session data
+    // 3. Create response with session data
     let response = new Response(
       JSON.stringify({
         data: authResponse
@@ -395,12 +331,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }
       }
     );
-    
-    // 5. Set session cookies
+      // 5. Set session cookies
     response = setSessionCookies(response, authResponse.session);
-    
-    // 6. Set CSRF token for additional security
-    response = setCsrfToken(response);
     
     return response;
     

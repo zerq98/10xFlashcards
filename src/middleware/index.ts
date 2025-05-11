@@ -31,7 +31,6 @@ const clearAuthCookies = (context: { cookies: AstroCookies }) => {
   context.cookies.delete("access_token", { path: "/" });
   context.cookies.delete("refresh_token", { path: "/" });
   context.cookies.delete("user_id", { path: "/" });
-  context.cookies.delete("csrf_token", { path: "/" });
 };
 
 // Funkcja pomocnicza do ustawiania ciasteczek uwierzytelniających
@@ -66,25 +65,9 @@ const setAuthCookies = (
     sameSite: "strict",
     expires: expiryDate,
   });
-
-  // Generowanie tokenu CSRF dla dodatkowego zabezpieczenia
-  const csrfToken = crypto.randomUUID();
-  context.cookies.set("csrf_token", csrfToken, {
-    path: "/",
-    httpOnly: false, // Musi być dostępne dla JavaScript
-    secure: true,
-    sameSite: "strict",
-    expires: expiryDate,
-  });
-
-  // Zapisanie tokenu CSRF w locals, jeśli dostępne
-  if (context.locals) {
-    context.locals.csrfToken = csrfToken;
-  }
 };
 
 // Middleware do ładowania sesji i udostępniania jej w context.locals
-// Integruje funkcjonalności protectRoute i verifyCsrf
 export const loadSession = defineMiddleware(async (context, next) => {
   // Tworzenie nowej instancji klienta Supabase dla każdego żądania
   // to zwiększa bezpieczeństwo poprzez pełną izolację sesji między zapytaniami
@@ -105,9 +88,7 @@ export const loadSession = defineMiddleware(async (context, next) => {
         },
       },
     }
-  );
-
-  // Inicjalizacja kontekstu lokalnego
+  );  // Inicjalizacja kontekstu lokalnego
   context.locals.supabase = supabase;
   context.locals.session = null;
   context.locals.user = null;
@@ -115,23 +96,6 @@ export const loadSession = defineMiddleware(async (context, next) => {
   // Sprawdzamy czy aktualna ścieżka wymaga autoryzacji
   const pathname = new URL(context.request.url).pathname;
   const isProtectedRoute = !unprotectedRoutes.includes(pathname);
-  
-  // Weryfikacja CSRF dla żądań modyfikujących dane
-  const method = context.request.method.toUpperCase();
-  if (["POST", "PUT", "DELETE", "PATCH"].includes(method)) {
-    const csrfTokenCookie = context.cookies.get("csrf_token")?.value;
-    const csrfTokenHeader = context.request.headers.get("X-CSRF-Token");
-
-    if (
-      !csrfTokenCookie ||
-      !csrfTokenHeader ||
-      csrfTokenCookie !== csrfTokenHeader
-    ) {
-      return new Response("Zabronione - niepoprawny token CSRF", {
-        status: 403,
-      });
-    }
-  }
   
 
   // Pobieramy token dostępu i odświeżania z ciasteczek
