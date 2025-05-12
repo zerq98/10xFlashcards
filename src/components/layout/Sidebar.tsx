@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export const Sidebar = () => {
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   // Navigation items
   const navItems = [
@@ -15,6 +16,35 @@ export const Sidebar = () => {
       return pathname === '/topics' || pathname === '/';
     }
     return pathname.startsWith(path);
+  };
+
+  // Handle logout action
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Przekierowanie na stronę logowania po pomyślnym wylogowaniu
+        window.location.href = '/login';
+      } else {
+        console.error('Błąd wylogowania:', data.error);
+        alert('Wystąpił problem podczas wylogowywania. Spróbuj ponownie.');
+      }
+    } catch (error) {
+      console.error('Nieoczekiwany błąd wylogowania:', error);
+      alert('Wystąpił problem z połączeniem. Sprawdź połączenie i spróbuj ponownie.');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -66,15 +96,13 @@ export const Sidebar = () => {
           
           <button
             className="w-full flex items-center px-4 py-2 rounded-md text-text hover:bg-gray-900 transition-colors cursor-pointer"
-            onClick={() => {
-              // Will be implemented with auth
-              console.log('Logout clicked');
-            }}
+            onClick={handleLogout}
+            disabled={isLoggingOut}
           >
             <span className="mr-3">
               {renderIcon('LogOut')}
             </span>
-            Wyloguj
+            {isLoggingOut ? 'Wylogowywanie...' : 'Wyloguj'}
           </button>
         </div>
       </div>

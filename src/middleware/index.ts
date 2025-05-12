@@ -96,7 +96,6 @@ export const loadSession = defineMiddleware(async (context, next) => {
   // Sprawdzamy czy aktualna ścieżka wymaga autoryzacji
   const pathname = new URL(context.request.url).pathname;
   const isProtectedRoute = !unprotectedRoutes.includes(pathname);
-  
 
   // Pobieramy token dostępu i odświeżania z ciasteczek
   const accessToken = context.cookies.get("access_token")?.value;
@@ -111,6 +110,11 @@ export const loadSession = defineMiddleware(async (context, next) => {
   
   // Jeśli mamy tokeny, ustawiamy sesję
   if (accessToken && refreshToken) {
+
+    if(!isProtectedRoute) {
+      return context.redirect("/");
+    }
+
     try {
       // Ustawiamy sesję klienta używając tokenów z ciasteczek
       const {
