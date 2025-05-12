@@ -31,14 +31,13 @@ export const TopicList = () => {
       </div>
     );
   }
-  
-  if (topics.length === 0) {
+    if (topics.length === 0) {
     return (
-      <div className="p-8 text-center">
-        <div className="mx-auto mb-6 h-24 w-24 rounded-full bg-gradient-primary bg-opacity-20 flex items-center justify-center">
+      <div className="p-8 text-center border-2 border-dashed border-secondary/30 rounded-xl bg-background shadow-medium max-w-lg mx-auto">
+        <div className="mx-auto mb-6 h-24 w-24 rounded-full bg-gradient-to-r from-primary/20 via-secondary-400/20 to-accent-200/20 flex items-center justify-center shadow-inner">
           <svg 
             xmlns="http://www.w3.org/2000/svg" 
-            className="h-12 w-12 text-primary" 
+            className="h-14 w-14 text-gradient bg-gradient-to-r from-primary via-secondary-400 to-accent-200 bg-clip-text" 
             fill="none" 
             viewBox="0 0 24 24" 
             stroke="currentColor"
@@ -51,13 +50,13 @@ export const TopicList = () => {
             />
           </svg>
         </div>
-        <p className="mb-4 text-lg font-medium text-text">Nie masz jeszcze żadnych tematów.</p>
-        <p className="text-gray-400">Kliknij "Nowy Temat" aby rozpocząć!</p>
+        <h3 className="mb-2 text-2xl font-bold bg-gradient-to-r from-primary via-secondary-400 to-accent-200 text-transparent bg-clip-text">Brak tematów</h3>
+        <p className="mb-4 text-lg font-medium text-white">Nie masz jeszcze żadnych tematów.</p>
+        <p className="text-gray-400 mb-6">Zacznij od utworzenia nowego tematu, aby móc dodawać i generować fiszki.</p>
       </div>
     );
   }
-  
-  return (
+    return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       {topics.map((topic) => (
         <TopicCard 

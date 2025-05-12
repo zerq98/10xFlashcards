@@ -19,16 +19,16 @@ export const useTopicsStore = create<TopicsState>((set, get) => ({
   
   fetchTopics: async () => {
     try {
-      set({ loading: true, error: undefined });
-      const response = await fetch('/api/topics');
+      set({ loading: true, error: undefined });      const response = await fetch('/api/topics');
       
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error?.message || 'Failed to fetch topics');
       }
       
-      const { data } = await response.json();
-      set({ topics: data, loading: false });
+      const responseData = await response.json();
+      const topics = responseData.data.topics;
+      set({ topics, loading: false });
     } catch (error) {
       console.error('Error fetching topics:', error);
       set({ 
