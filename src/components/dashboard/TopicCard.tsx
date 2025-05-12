@@ -22,13 +22,13 @@ export const TopicCard: React.FC<TopicCardProps> = ({
         <div className="flex justify-between items-start">
           <a 
             href={`/topics/${id}`} 
-            className="truncate max-w-[80%] text-xl font-semibold text-primary hover:text-opacity-80 transition-colors"
+            className="truncate max-w-[80%] text-xl font-semibold text-grays-100 hover:text-opacity-80 transition-colors"
           >
             {name}
           </a>
           <button
             onClick={() => setShowDeleteDialog(true)}
-            className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+            className="p-1 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
             aria-label="Usuń temat"
           >
             <svg 
@@ -48,7 +48,7 @@ export const TopicCard: React.FC<TopicCardProps> = ({
           </button>
         </div>
         <div className="mt-3 flex items-center">
-          <span className="bg-accent bg-opacity-20 text-accent text-xs font-medium px-2.5 py-0.5 rounded-full">
+          <span className="bg-transparent bg-opacity-20 text-accent-200 text-xs font-medium rounded-full">
             {flashcardCount} fiszek
           </span>
         </div>

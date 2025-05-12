@@ -33,7 +33,7 @@ export const TopicList = () => {
   }
     if (topics.length === 0) {
     return (
-      <div className="p-8 text-center border-2 border-dashed border-secondary/30 rounded-xl bg-background shadow-medium max-w-lg mx-auto">
+      <div className="p-8 text-center rounded-xl bg-background shadow-medium max-w-lg mx-auto">
         <div className="mx-auto mb-6 h-24 w-24 rounded-full bg-gradient-to-r from-primary/20 via-secondary-400/20 to-accent-200/20 flex items-center justify-center shadow-inner">
           <svg 
             xmlns="http://www.w3.org/2000/svg" 
