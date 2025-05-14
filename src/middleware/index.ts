@@ -22,8 +22,6 @@ export const unprotectedRoutes = [
   "/reset-password",
   "/api/auth/login",
   "/api/auth/register",
-  "/api/auth/forgot-password",
-  "/api/auth/reset-password",
 ];
 
 // Funkcja pomocnicza do czyszczenia ciasteczek uwierzytelniających

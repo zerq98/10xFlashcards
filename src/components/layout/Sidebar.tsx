@@ -3,12 +3,11 @@ import React, { useState } from 'react';
 export const Sidebar = () => {
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  
-  // Navigation items
+    // Navigation items
   const navItems = [
     { name: 'Tematy', href: '/topics', icon: 'BookOpen' },
     { name: 'Powtórki', href: '/review', icon: 'RefreshCcw' },
-    { name: 'Ustawienia', href: '/settings', icon: 'Settings' },
+    { name: 'Ustawienia', href: '/account/settings', icon: 'Settings' },
   ];
 
   const isActive = (path: string) => {

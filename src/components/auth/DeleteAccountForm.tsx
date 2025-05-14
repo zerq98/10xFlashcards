@@ -43,18 +43,17 @@ const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ isOpen, onClo
           Czy na pewno chcesz usunąć swoje konto? Ta operacja jest nieodwracalna. Wszystkie Twoje dane zostaną trwale usunięte.
         </p>
         
-        <div className="flex flex-col sm:flex-row gap-3 justify-end">
-          <button
+        <div className="flex flex-col sm:flex-row gap-3 justify-end">          <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-md bg-gray-800 hover:bg-gray-700 transition-colors"
+            className="px-4 py-2 rounded-md bg-gray-800 hover:bg-gray-700 transition-colors shadow-md"
           >
             Anuluj
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 transition-colors text-white"
+            className="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 transition-colors text-white shadow-md"
           >
             Usuń konto
           </button>
@@ -118,13 +117,12 @@ export const DeleteAccountForm = () => {
         onConfirm={handleConfirmDelete}
       />
       
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="p-4 bg-red-950/20 border border-red-500/20 rounded-lg">
+      <form onSubmit={handleSubmit} className="space-y-6">        <div className="p-4 bg-red-950/20 border border-red-500/20 rounded-lg">
           <h3 className="text-lg font-medium text-red-400 mb-2">
             Uwaga: Działanie nieodwracalne
           </h3>
           <p className="text-text mb-4">
-            Usunięcie konta spowoduje trwałe usunięcie wszystkich Twoich danych, w tym fiszek i ustawień. Tej operacji nie można cofnąć.
+            Usunięcie konta spowoduje trwałe usunięcie wszystkich Twoich danych, w tym fiszek i ustawień. Odzyskanie konta jest możliwe wyłącznie poprzez kontakt z supportem.
           </p>
         </div>
         
@@ -138,34 +136,35 @@ export const DeleteAccountForm = () => {
             <p>{error}</p>
           </div>
         )}
-        
-        <div className="space-y-2">
+          <div className="space-y-2">
           <label 
             htmlFor={passwordId} 
             className="block text-sm font-medium"
           >
             Wprowadź hasło, aby potwierdzić
-          </label>
-          <input
-            id={passwordId}
-            type="password"
-            autoComplete="current-password"
-            required
-            placeholder="••••••••"
-            maxLength={MAX_PASSWORD_LENGTH}
-            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 text-text"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            aria-describedby={error ? errorId : undefined}
-          />
+          </label>          <div
+            className="group focus-within:bg-gradient-to-r focus-within:from-primary focus-within:via-secondary focus-within:to-accent bg-transparent p-[2px] rounded-md transition-all duration-300"
+          >
+            <input
+              id={passwordId}
+              type="password"
+              autoComplete="current-password"
+              required
+              placeholder="••••••••"
+              maxLength={MAX_PASSWORD_LENGTH}
+              className="w-full px-4 py-2 bg-gray-800 rounded-md focus:outline-none text-text"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              aria-describedby={error ? errorId : undefined}
+            />
+          </div>
         </div>
-        
-        {/* Submit button */}
+          {/* Submit button */}
         <div>
           <button
             type="submit"
-            disabled={isLoading || !password}
-            className="w-full py-2 px-4 rounded-md font-medium transition-all bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/50 disabled:opacity-50 text-white"
+            disabled={isLoading}
+            className="w-full py-2 px-4 rounded-md font-medium transition-all bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/50 text-white shadow-md cursor-pointer disabled:cursor-not-allowed"
           >
             {isLoading ? 'Usuwanie konta...' : 'Usuń konto'}
           </button>
