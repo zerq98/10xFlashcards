@@ -85,20 +85,42 @@ export const DeleteAccountForm = () => {
     // Otwórz dialog potwierdzający
     setIsDialogOpen(true);
   };
-  
-  const handleConfirmDelete = async () => {
+    const handleConfirmDelete = async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      console.log('Usuwanie konta, hasło:', password);
-      // Tutaj będzie wywołanie API /api/auth/delete-account
-      await new Promise(resolve => setTimeout(resolve, 600)); // symulacja opóźnienia
+      // Wywołanie API /api/auth/delete-account
+      const response = await fetch('/api/auth/delete-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ password })
+      });
       
-      // Po implementacji backendu - przekierowanie na stronę główną lub ekran potwierdzenia
-      console.log('Konto usunięte pomyślnie');
-    } catch (err) {
-      setError('Wystąpił błąd podczas usuwania konta. Sprawdź, czy hasło jest poprawne.');
+      const data = await response.json();
+        if (!response.ok) {
+        // Specjalna obsługa błędu przekroczenia limitu
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('Retry-After');
+          let waitTime = 'jakiś czas';
+          
+          if (retryAfter) {
+            const minutes = Math.ceil(parseInt(retryAfter) / 60);
+            waitTime = `${minutes} ${minutes === 1 ? 'minutę' : minutes < 5 ? 'minuty' : 'minut'}`;
+          }
+          
+          throw new Error(data.error?.message || `Przekroczono limit prób. Spróbuj ponownie za ${waitTime}.`);
+        }
+        
+        throw new Error(data.error?.message || 'Nieznany błąd podczas usuwania konta');
+      }
+      
+      // Przekierowanie na stronę główną po pomyślnym usunięciu konta
+      window.location.href = '/login?deleted=true';
+    } catch (err: any) {
+      setError(err.message || 'Wystąpił błąd podczas usuwania konta. Sprawdź, czy hasło jest poprawne.');
       setIsDialogOpen(false);
     } finally {
       setIsLoading(false);

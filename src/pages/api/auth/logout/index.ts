@@ -1,4 +1,9 @@
+import { loadSession } from '@/middleware';
 import type { APIRoute } from 'astro';
+
+// This endpoint is protected - only accessible for authenticated users
+export const prerender = false;
+export const onRequest = loadSession;
 
 /**
  * Endpoint API do wylogowania użytkownika
