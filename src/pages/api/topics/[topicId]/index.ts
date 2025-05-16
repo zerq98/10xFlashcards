@@ -3,6 +3,146 @@ import type { APIRoute } from 'astro';
 import type { ApiErrorResponse, ApiSuccessResponse, TopicDTO, UpdateTopicRequestDTO } from '../../../../types';
 
 /**
+ * GET /api/topics/[topicId] - Retrieves data for a specific topic
+ * 
+ * @param {Object} context - Astro API route context
+ * @returns {Response} JSON response with topic data or error details
+ */
+export const GET: APIRoute = async ({ params, locals }) => {
+  try {
+    // 1. Validate the topicId parameter - handle this first to fail fast
+    const topicIdSchema = z.string().uuid('Topic ID must be a valid UUID');
+    const validationResult = topicIdSchema.safeParse(params.topicId);
+    
+    if (!validationResult.success) {
+      return new Response(JSON.stringify({
+        error: {
+          code: 'INVALID_TOPIC_ID',
+          message: 'Invalid topic ID format',
+          details: validationResult.error.format()
+        }
+      } satisfies ApiErrorResponse), {
+        status: 400,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store' 
+        }
+      });
+    }
+    
+    const topicId = validationResult.data;
+    
+    // 2. Check authentication - using supabase from context.locals per guidelines
+    const supabase = locals.supabase;
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      return new Response(JSON.stringify({
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'You must be logged in to access this resource'
+        }
+      } satisfies ApiErrorResponse), {
+        status: 401,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store' 
+        }
+      });
+    }
+    
+    const userId = session.user.id;
+    
+    // 3. Fetch the topic data from the database
+    const { data: topic, error } = await supabase
+      .from('topics')
+      .select('id, name, created_at, updated_at')
+      .eq('id', topicId)
+      .eq('user_id', userId)
+      .single();
+    
+    // 4. Handle database errors
+    if (error) {
+      // Check if it's a not found error
+      if (error.code === 'PGRST116') {
+        return new Response(JSON.stringify({
+          error: {
+            code: 'TOPIC_NOT_FOUND',
+            message: 'Topic not found or you do not have access to it'
+          }
+        } satisfies ApiErrorResponse), {
+          status: 404,
+          headers: { 
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store' 
+          }
+        });
+      }
+      
+      // Handle other database errors
+      console.error('Database query error:', error);
+      return new Response(JSON.stringify({
+        error: {
+          code: 'DATABASE_ERROR',
+          message: 'Failed to fetch topic data',
+          details: error.message
+        }
+      } satisfies ApiErrorResponse), {
+        status: 500,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store' 
+        }
+      });
+    }
+    
+    // 5. Topic not found case (should be caught by error above but adding as a safeguard)
+    if (!topic) {
+      return new Response(JSON.stringify({
+        error: {
+          code: 'TOPIC_NOT_FOUND',
+          message: 'Topic not found or you do not have access to it'
+        }
+      } satisfies ApiErrorResponse), {
+        status: 404,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store' 
+        }
+      });
+    }
+    
+    // 6. Return the topic data (reuse the mapToTopicResponse function defined in this file)
+    return new Response(JSON.stringify({
+      data: mapToTopicResponse(topic)
+    } satisfies ApiSuccessResponse<TopicDTO>), {
+      status: 200,
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'max-age=60' // Cache results for 60 seconds
+      }
+    });
+    
+  } catch (error) {
+    console.error('Unexpected error:', error);
+    return new Response(JSON.stringify({
+      error: {
+        code: 'SERVER_ERROR',
+        message: 'An unexpected error occurred',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }
+    } satisfies ApiErrorResponse), {
+      status: 500,
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store' 
+      }
+    });
+  }
+};
+
+
+/**
  * Custom error type for topic update operations
  */
 interface UpdateError {

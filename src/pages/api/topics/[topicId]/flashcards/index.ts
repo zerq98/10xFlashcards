@@ -82,7 +82,10 @@ type CursorSafeValue = string | number;
  * @param field Sort field name
  * @param value Field value to encode
  */
-const encodeCursor = (field: CursorSafeField, value: CursorSafeValue): string => {
+const encodeCursor = (
+  field: CursorSafeField,
+  value: CursorSafeValue
+): string => {
   const cursorData = { field, value };
   return Buffer.from(JSON.stringify(cursorData)).toString("base64");
 };
@@ -91,7 +94,9 @@ const encodeCursor = (field: CursorSafeField, value: CursorSafeValue): string =>
  * Helper function to decode cursor for pagination
  * @param cursor Base64 encoded cursor string
  */
-const decodeCursor = (cursor: string): { field: CursorSafeField; value: CursorSafeValue } => {
+const decodeCursor = (
+  cursor: string
+): { field: CursorSafeField; value: CursorSafeValue } => {
   try {
     return JSON.parse(Buffer.from(cursor, "base64").toString());
   } catch (error) {
@@ -121,26 +126,34 @@ const generateETag = (
 const FLASHCARD_CONFIG = {
   limits: {
     perTopic: 1000, // Maximum flashcards per topic
-    perDay: 200,    // Maximum flashcards created per day per user
+    perDay: 200, // Maximum flashcards created per day per user
   },
   content: {
     maxFrontLength: 500,
     maxBackLength: 500,
     minLength: 1,
-  }
+  },
 };
 
 /**
  * More comprehensive validation schema for creating flashcards with detailed error messages
  */
 const createFlashcardSchema = z.object({
-  front: z.string()
+  front: z
+    .string()
     .min(FLASHCARD_CONFIG.content.minLength, "Front content is required")
-    .max(FLASHCARD_CONFIG.content.maxFrontLength, `Front content must be ${FLASHCARD_CONFIG.content.maxFrontLength} characters or less`)
+    .max(
+      FLASHCARD_CONFIG.content.maxFrontLength,
+      `Front content must be ${FLASHCARD_CONFIG.content.maxFrontLength} characters or less`
+    )
     .transform((val) => val.trim()),
-  back: z.string()
+  back: z
+    .string()
     .min(FLASHCARD_CONFIG.content.minLength, "Back content is required")
-    .max(FLASHCARD_CONFIG.content.maxBackLength, `Back content must be ${FLASHCARD_CONFIG.content.maxBackLength} characters or less`)
+    .max(
+      FLASHCARD_CONFIG.content.maxBackLength,
+      `Back content must be ${FLASHCARD_CONFIG.content.maxBackLength} characters or less`
+    )
     .transform((val) => val.trim()),
 });
 
@@ -152,13 +165,13 @@ const createFlashcardSchema = z.object({
 const sanitizeFlashcardContent = (content: string): string => {
   // Basic sanitization - remove dangerous HTML, scripts, iframes, and excessive whitespace
   return content
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
-    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-    .replace(/<[^>]*>/g, '') // Remove any remaining HTML tags
-    .replace(/javascript:/gi, '') // Remove potential JavaScript protocol handlers
-    .replace(/on\w+=/gi, '') // Remove event handlers
-    .replace(/(\r\n|\n|\r){3,}/gm, '\n\n') // Normalize excessive line breaks
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "")
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
+    .replace(/<[^>]*>/g, "") // Remove any remaining HTML tags
+    .replace(/javascript:/gi, "") // Remove potential JavaScript protocol handlers
+    .replace(/on\w+=/gi, "") // Remove event handlers
+    .replace(/(\r\n|\n|\r){3,}/gm, "\n\n") // Normalize excessive line breaks
     .trim();
 };
 
@@ -173,8 +186,19 @@ const checkFlashcardLimits = async (
   supabase: App.Locals["supabase"],
   userId: string,
   topicId: string
-): Promise<{ limitReached: boolean; reason?: string; count?: number; limit?: number }> => {
+): Promise<{
+  limitReached: boolean;
+  reason?: string;
+  count?: number;
+  limit?: number;
+}> => {
+  console.log("DEBUG: checkFlashcardLimits - Starting limit check", {
+    userId,
+    topicId,
+  });
+
   // Check total flashcards per topic limit
+  console.log("DEBUG: checkFlashcardLimits - Checking topic limit");
   const { count: topicCount, error: topicCountError } = await supabase
     .from("flashcards")
     .select("*", { count: "exact", head: true })
@@ -186,19 +210,31 @@ const checkFlashcardLimits = async (
     return { limitReached: false }; // Don't block creation if we can't check
   }
 
+  console.log("DEBUG: checkFlashcardLimits - Topic count result", {
+    count: topicCount,
+    limit: FLASHCARD_CONFIG.limits.perTopic,
+    isAtLimit:
+      topicCount !== null && topicCount >= FLASHCARD_CONFIG.limits.perTopic,
+  });
+
   if (topicCount !== null && topicCount >= FLASHCARD_CONFIG.limits.perTopic) {
-    return { 
-      limitReached: true, 
+    return {
+      limitReached: true,
       reason: "TOPIC_LIMIT_REACHED",
       count: topicCount,
-      limit: FLASHCARD_CONFIG.limits.perTopic
+      limit: FLASHCARD_CONFIG.limits.perTopic,
     };
   }
 
   // Check daily flashcard creation limit
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
+  console.log("DEBUG: checkFlashcardLimits - Checking daily limit", {
+    date: today.toISOString(),
+    userId,
+  });
+
   const { count: dailyCount, error: dailyCountError } = await supabase
     .from("flashcards")
     .select("*", { count: "exact", head: true })
@@ -210,15 +246,23 @@ const checkFlashcardLimits = async (
     return { limitReached: false }; // Don't block creation if we can't check
   }
 
+  console.log("DEBUG: checkFlashcardLimits - Daily count result", {
+    count: dailyCount,
+    limit: FLASHCARD_CONFIG.limits.perDay,
+    isAtLimit:
+      dailyCount !== null && dailyCount >= FLASHCARD_CONFIG.limits.perDay,
+  });
+
   if (dailyCount !== null && dailyCount >= FLASHCARD_CONFIG.limits.perDay) {
-    return { 
-      limitReached: true, 
+    return {
+      limitReached: true,
       reason: "DAILY_LIMIT_REACHED",
       count: dailyCount,
-      limit: FLASHCARD_CONFIG.limits.perDay
+      limit: FLASHCARD_CONFIG.limits.perDay,
     };
   }
 
+  console.log("DEBUG: checkFlashcardLimits - No limits reached");
   return { limitReached: false };
 };
 
@@ -236,6 +280,8 @@ export const GET: APIRoute = async ({
   // Start performance tracking
   const startTime = performance.now();
   let dbQueryTime = 0;
+
+  console.log("DEBUG: Starting GET /api/topics/:topicId/flashcards handler");
 
   try {
     // 1. Validate topicId path parameter - handle this first to fail fast
@@ -290,15 +336,19 @@ export const GET: APIRoute = async ({
       );
     }
 
-    const queryParams = validationResult.data;
-
-    // 3. Check authentication - using supabase from context.locals per guidelines
+    const queryParams = validationResult.data; // 3. Check authentication - using supabase from context.locals per guidelines
+    console.log("DEBUG: Checking authentication");
     const supabase = locals.supabase;
     const {
       data: { session },
     } = await supabase.auth.getSession();
 
+    console.log(
+      "DEBUG: GET /api/topics/:topicId/flashcards - Session status:",
+      session ? "Authenticated" : "Not authenticated"
+    );
     if (!session) {
+      console.log("ERROR: Authentication failed - No valid session");
       return new Response(
         JSON.stringify({
           error: {
@@ -317,6 +367,7 @@ export const GET: APIRoute = async ({
     }
 
     const userId = session.user.id;
+    console.log("DEBUG: User authenticated with ID:", userId);
 
     // Check for If-None-Match header for conditional request
     const ifNoneMatch = request.headers.get("If-None-Match");
@@ -366,6 +417,17 @@ export const GET: APIRoute = async ({
       cursor: queryParams.cursor,
     };
 
+    console.log("DEBUG: GET - Building database query", {
+      topicId: query.topicId,
+      page: query.page,
+      perPage: query.perPage,
+      sortBy: query.sortBy,
+      sortOrder: query.sortOrder,
+      filterAiGenerated: query.filterAiGenerated,
+      filterEdited: query.filterEdited,
+      hasCursor: !!query.cursor,
+    });
+
     // Start DB query performance measurement
     const dbStartTime = performance.now();
 
@@ -379,8 +441,7 @@ export const GET: APIRoute = async ({
           head: false,
         }
       )
-      .eq("topic_id", query.topicId)
-      .eq("user_id", query.userId);
+      .eq("topic_id", query.topicId);
 
     // Apply filtering
     if (query.filterAiGenerated !== undefined) {
@@ -433,17 +494,35 @@ export const GET: APIRoute = async ({
       // Offset-based pagination
       flashcardsQuery = flashcardsQuery
         .order(query.sortBy, { ascending: query.sortOrder === "asc" })
-        .range((query.page - 1) * query.perPage, query.page * query.perPage - 1);
+        .range(
+          (query.page - 1) * query.perPage,
+          query.page * query.perPage - 1
+        );
     }
 
     // Execute the query
+    console.log("DEBUG: GET - Executing database query");
     const { data: flashcards, count, error } = await flashcardsQuery;
 
     // Calculate DB query time
     dbQueryTime = performance.now() - dbStartTime;
+    console.log(
+      "DEBUG: GET - Database query completed in",
+      dbQueryTime.toFixed(2),
+      "ms",
+      {
+        resultsCount: flashcards?.length || 0,
+        totalCount: count || "unknown",
+        hasError: !!error,
+      }
+    );
 
     if (error) {
-      console.error("Database query error:", error);
+      console.log("ERROR: GET - Database query error:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+      });
       return new Response(
         JSON.stringify({
           error: {
@@ -463,7 +542,9 @@ export const GET: APIRoute = async ({
     }
 
     // 6. Format the response
-    let paginationData: FlashcardsListResponseDTO['pagination'];
+
+    console.log("DEBUG: GET - Formatting response data");
+    let paginationData: FlashcardsListResponseDTO["pagination"];
     let nextCursor: string | undefined = undefined;
 
     if (query.cursor) {
@@ -471,9 +552,13 @@ export const GET: APIRoute = async ({
       if (flashcards && flashcards.length === query.perPage) {
         const lastItem = flashcards[flashcards.length - 1];
         // Only use valid fields for cursors with proper type checking
-        if (query.sortBy === "created_at" || query.sortBy === "updated_at" || query.sortBy === "front") {
+        if (
+          query.sortBy === "created_at" ||
+          query.sortBy === "updated_at" ||
+          query.sortBy === "front"
+        ) {
           const value = lastItem[query.sortBy];
-          if (typeof value === 'string' || typeof value === 'number') {
+          if (typeof value === "string" || typeof value === "number") {
             nextCursor = encodeCursor(query.sortBy, value);
           }
         }
@@ -489,7 +574,7 @@ export const GET: APIRoute = async ({
           (flashcards?.length || 0) +
           (nextCursor ? 1 : 0),
         per_page: query.perPage,
-        next_cursor: nextCursor
+        next_cursor: nextCursor,
       };
     } else {
       // For offset-based pagination
@@ -498,36 +583,49 @@ export const GET: APIRoute = async ({
         current_page: query.page,
         total_pages: totalPages,
         total_items: count || 0,
-        per_page: query.perPage
+        per_page: query.perPage,
       };
     }
 
     // Handle the case when no flashcards are found
+    console.log("DEBUG: GET - Checking if flashcards are empty");
     if (!flashcards || flashcards.length === 0) {
       const emptyResponse: FlashcardsListResponseDTO = {
         flashcards: [],
-        pagination: paginationData
+        pagination: paginationData,
       };
 
+      console.log(
+        "DEBUG: GET - No flashcards found, returning empty response etag"
+      );
+
       const etag = generateETag(emptyResponse, userId, topicId);
+      console.log(etag, ifNoneMatch);
 
       // For conditional requests, check if resource has changed
       if (ifNoneMatch && ifNoneMatch === `"${etag}"`) {
-        return new Response(null, {
-          status: 304, // Not Modified
-          headers: {
-            ETag: `"${etag}"`,
-            "Cache-Control": "max-age=60", // Cache empty results for 60 seconds
-          },
-        });
+        return new Response(
+          JSON.stringify({
+            data: emptyResponse,
+          } satisfies ApiSuccessResponse<FlashcardsListResponseDTO>),
+          {
+            status: 200, // Not Modified
+            headers: {
+              ETag: `"${etag}"`,
+              "Cache-Control": "max-age=60", // Cache empty results for 60 seconds
+            },
+          }
+        );
       }
 
       const endTime = performance.now();
       const totalDuration = endTime - startTime;
 
+      console.log("DEBUG: GET - No flashcards found, returning empty response");
+
       return new Response(
         JSON.stringify({
-          data: emptyResponse
+          data: emptyResponse,
         } satisfies ApiSuccessResponse<FlashcardsListResponseDTO>),
         {
           status: 200,
@@ -544,6 +642,7 @@ export const GET: APIRoute = async ({
     }
 
     // Convert database flashcards to FlashcardDTOs using the existing type
+    console.log("DEBUG: GET - Formatting response data");
     const flashcardDTOs = flashcards.map((flashcard) => ({
       id: flashcard.id,
       front: flashcard.front,
@@ -557,8 +656,17 @@ export const GET: APIRoute = async ({
     // Build the formatted response object
     const formattedResponse: FlashcardsListResponseDTO = {
       flashcards: flashcardDTOs,
-      pagination: paginationData
+      pagination: paginationData,
     };
+
+    console.log("DEBUG: GET - Response formatted successfully", {
+      flashcardsCount: flashcardDTOs.length,
+      paginationInfo: {
+        currentPage: paginationData.current_page,
+        totalPages: paginationData.total_pages,
+        totalItems: paginationData.total_items,
+      },
+    });
 
     // Generate ETag for caching
     const etag = generateETag(formattedResponse, userId, topicId);
@@ -582,13 +690,15 @@ export const GET: APIRoute = async ({
     console.info(
       `GET /api/topics/${topicId}/flashcards - ${totalDuration.toFixed(
         2
-      )}ms - DB: ${dbQueryTime.toFixed(2)}ms - Count: ${count || flashcards.length}`
+      )}ms - DB: ${dbQueryTime.toFixed(2)}ms - Count: ${
+        count || flashcards.length
+      }`
     );
 
     // Return response with proper headers including performance metrics and ETag
     return new Response(
       JSON.stringify({
-        data: formattedResponse
+        data: formattedResponse,
       } satisfies ApiSuccessResponse<FlashcardsListResponseDTO>),
       {
         status: 200,
@@ -607,6 +717,19 @@ export const GET: APIRoute = async ({
     const endTime = performance.now();
     const totalDuration = endTime - startTime;
 
+    // More detailed logging to help diagnose where the error occurred
+    console.error("ERROR: Unhandled exception in GET handler");
+    console.error(
+      "Error type:",
+      error instanceof Error ? error.constructor.name : typeof error
+    );
+    console.error(
+      "Error message:",
+      error instanceof Error ? error.message : String(error)
+    );
+    if (error instanceof Error && error.stack) {
+      console.error("Stack trace:", error.stack);
+    }
     console.error(
       `Error in GET /api/topics/:topicId/flashcards - ${totalDuration.toFixed(
         2
@@ -636,13 +759,13 @@ export const GET: APIRoute = async ({
 
 /**
  * POST /api/topics/:topicId/flashcards - Creates a new flashcard in a specific topic
- * 
+ *
  * Request body:
  * {
  *   front: string, // Required, 1-500 characters
  *   back: string   // Required, 1-500 characters
  * }
- * 
+ *
  * Success response (201 Created):
  * {
  *   data: {
@@ -655,14 +778,14 @@ export const GET: APIRoute = async ({
  *     updated_at: string
  *   }
  * }
- * 
+ *
  * Error responses:
  * - 400 Bad Request: Invalid input parameters
  * - 401 Unauthorized: User not authenticated
  * - 403 Forbidden: User not authorized to access topic or limit reached
  * - 404 Not Found: Topic not found
  * - 500 Internal Server Error: Database or other server issues
- * 
+ *
  * @param {Object} context - Astro API route context
  * @returns {Response} JSON response with created flashcard or error details
  */
@@ -674,6 +797,8 @@ export const POST: APIRoute = async ({
   // Start performance tracking
   const startTime = performance.now();
   let dbOperationTime = 0;
+
+  console.log("DEBUG: Starting POST /api/topics/:topicId/flashcards handler");
 
   try {
     // 1. Validate topicId path parameter - handle this first to fail fast
@@ -701,15 +826,20 @@ export const POST: APIRoute = async ({
           },
         }
       );
-    }
-
-    // 2. Check authentication - using supabase from context.locals per guidelines
+    } // 2. Check authentication - using supabase from context.locals per guidelines
+    console.log("DEBUG: POST - Checking authentication");
     const supabase = locals.supabase;
     const {
       data: { session },
     } = await supabase.auth.getSession();
 
+    console.log(
+      "DEBUG: POST - Auth check result:",
+      session ? "Authenticated" : "Not authenticated"
+    );
+
     if (!session) {
+      console.log("ERROR: POST - Authentication failed - No valid session");
       return new Response(
         JSON.stringify({
           error: {
@@ -727,13 +857,17 @@ export const POST: APIRoute = async ({
       );
     }
 
-    const userId = session.user.id;
-
-    // 3. Validate and parse request body
+    const userId = session.user.id; // 3. Validate and parse request body
+    console.log("DEBUG: POST - Parsing and validating request body");
     let requestData: unknown;
     try {
       requestData = await request.json();
+      console.log("DEBUG: POST - Request body parsed successfully");
     } catch (error) {
+      console.log(
+        "ERROR: POST - Failed to parse request body",
+        error instanceof Error ? error.message : String(error)
+      );
       return new Response(
         JSON.stringify({
           error: {
@@ -750,12 +884,15 @@ export const POST: APIRoute = async ({
           },
         }
       );
-    }
-
-    // Validate the request data against our schema
+    } // Validate the request data against our schema
+    console.log("DEBUG: POST - Validating request data against schema");
     const validationResult = createFlashcardSchema.safeParse(requestData);
 
     if (!validationResult.success) {
+      console.log(
+        "ERROR: POST - Schema validation failed",
+        validationResult.error.format()
+      );
       return new Response(
         JSON.stringify({
           error: {
@@ -773,10 +910,14 @@ export const POST: APIRoute = async ({
         }
       );
     }
-
     const flashcardData = validationResult.data;
+    console.log("DEBUG: POST - Schema validation succeeded, parsed data", {
+      frontLength: flashcardData.front.length,
+      backLength: flashcardData.back.length,
+    });
 
     // 4. Verify topic ownership and existence
+    console.log("DEBUG: POST - Verifying topic ownership", { topicId, userId });
     const { data: topic, error: topicError } = await supabase
       .from("topics")
       .select("id")
@@ -785,6 +926,11 @@ export const POST: APIRoute = async ({
       .single();
 
     if (topicError || !topic) {
+      console.log("ERROR: POST - Topic verification failed", {
+        error: topicError?.message,
+        code: topicError?.code,
+        exists: !!topic,
+      });
       const status = topicError?.code === "PGRST116" ? 404 : 403;
       const message =
         status === 404
@@ -806,21 +952,24 @@ export const POST: APIRoute = async ({
           },
         }
       );
-    }
-
-    // 5. Check flashcard creation limits
+    } // 5. Check flashcard creation limits
+    console.log("DEBUG: POST - Checking flashcard creation limits");
     const limitCheck = await checkFlashcardLimits(supabase, userId, topicId);
+    console.log("DEBUG: POST - Limit check result", limitCheck);
+
     if (limitCheck.limitReached) {
+      console.log("ERROR: POST - Flashcard limit reached", limitCheck);
       return new Response(
         JSON.stringify({
           error: {
             code: limitCheck.reason || "LIMIT_REACHED",
-            message: limitCheck.reason === "TOPIC_LIMIT_REACHED" 
-              ? `You have reached the maximum number of flashcards (${limitCheck.limit}) for this topic`
-              : `You have reached the daily limit of ${limitCheck.limit} flashcards`,
+            message:
+              limitCheck.reason === "TOPIC_LIMIT_REACHED"
+                ? `You have reached the maximum number of flashcards (${limitCheck.limit}) for this topic`
+                : `You have reached the daily limit of ${limitCheck.limit} flashcards`,
             details: {
               current: limitCheck.count,
-              limit: limitCheck.limit
+              limit: limitCheck.limit,
             },
           },
         } satisfies ApiErrorResponse),
@@ -832,22 +981,35 @@ export const POST: APIRoute = async ({
           },
         }
       );
-    }
-
-    // 6. Sanitize flashcard content
+    } // 6. Sanitize flashcard content
+    console.log("DEBUG: POST - Sanitizing flashcard content");
     const sanitizedFront = sanitizeFlashcardContent(flashcardData.front);
     const sanitizedBack = sanitizeFlashcardContent(flashcardData.back);
+    console.log("DEBUG: POST - Content after sanitization", {
+      frontOrigLength: flashcardData.front.length,
+      frontSanitizedLength: sanitizedFront.length,
+      backOrigLength: flashcardData.back.length,
+      backSanitizedLength: sanitizedBack.length,
+    });
 
     // If sanitization removed all content, return an error
     if (!sanitizedFront.trim() || !sanitizedBack.trim()) {
+      console.log("ERROR: POST - Empty content after sanitization", {
+        frontEmpty: !sanitizedFront.trim(),
+        backEmpty: !sanitizedBack.trim(),
+      });
       return new Response(
         JSON.stringify({
           error: {
             code: "INVALID_CONTENT",
             message: "Flashcard content cannot be empty after sanitization",
             details: {
-              front: !sanitizedFront.trim() ? "Empty after sanitization" : "Valid",
-              back: !sanitizedBack.trim() ? "Empty after sanitization" : "Valid",
+              front: !sanitizedFront.trim()
+                ? "Empty after sanitization"
+                : "Valid",
+              back: !sanitizedBack.trim()
+                ? "Empty after sanitization"
+                : "Valid",
             },
           },
         } satisfies ApiErrorResponse),
@@ -859,11 +1021,13 @@ export const POST: APIRoute = async ({
           },
         }
       );
-    }
-
-    // 7. Create the flashcard in the database
+    } // 7. Create the flashcard in the database
+    console.log("DEBUG: POST - Creating flashcard in database", {
+      topicId,
+      userId,
+    });
     const dbStartTime = performance.now();
-    
+
     const { data: createdFlashcard, error: insertError } = await supabase
       .from("flashcards")
       .insert([
@@ -876,13 +1040,24 @@ export const POST: APIRoute = async ({
           was_edited_before_save: false,
         },
       ])
-      .select("id, front, back, is_ai_generated, sr_state, created_at, updated_at")
+      .select(
+        "id, front, back, is_ai_generated, sr_state, created_at, updated_at"
+      )
       .single();
-    
+
     dbOperationTime = performance.now() - dbStartTime;
+    console.log(
+      "DEBUG: POST - Database operation completed in",
+      dbOperationTime.toFixed(2),
+      "ms"
+    );
 
     if (insertError || !createdFlashcard) {
-      console.error("Database insertion error:", insertError);
+      console.log("ERROR: POST - Database insertion error", {
+        error: insertError?.message,
+        code: insertError?.code,
+        details: insertError?.details,
+      });
       return new Response(
         JSON.stringify({
           error: {
@@ -943,6 +1118,20 @@ export const POST: APIRoute = async ({
     // Calculate error response time for monitoring
     const endTime = performance.now();
     const totalDuration = endTime - startTime;
+
+    // More detailed logging to help diagnose where the error occurred
+    console.error("ERROR: Unhandled exception in POST handler");
+    console.error(
+      "Error type:",
+      error instanceof Error ? error.constructor.name : typeof error
+    );
+    console.error(
+      "Error message:",
+      error instanceof Error ? error.message : String(error)
+    );
+    if (error instanceof Error && error.stack) {
+      console.error("Stack trace:", error.stack);
+    }
 
     console.error(
       `Error in POST /api/topics/:topicId/flashcards - ${totalDuration.toFixed(

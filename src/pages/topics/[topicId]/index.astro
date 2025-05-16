@@ -1,0 +1,16 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { FlashcardsSection } from '../../../components/flashcards/FlashcardsSection';
+
+const { topicId } = Astro.params;
+
+if (!topicId) {
+  return Astro.redirect('/topics');
+}
+---
+
+<Layout title="Temat | 10xFlashcards">
+  <div class="container mx-auto px-4 py-6">
+    <FlashcardsSection client:load topicId={topicId} />
+  </div>
+</Layout>
