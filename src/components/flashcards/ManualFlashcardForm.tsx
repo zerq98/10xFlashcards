@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { z } from 'zod';
 import { useToast } from '../../hooks/useToast';
 import type { CreateFlashcardRequestDTO } from '@/types';
@@ -18,27 +18,30 @@ const flashcardSchema = z.object({
     .max(MAX_FLASHCARD_LENGTH, `Tył fiszki może mieć maksymalnie ${MAX_FLASHCARD_LENGTH} znaków`)
 });
 
-interface ManualFlashcardFormProps {
-  topicId: string;
-  onCancel: () => void;
-  onSave: (flashcard: CreateFlashcardRequestDTO) => Promise<void>;
-  isLoading?: boolean;
-}
-
 export const ManualFlashcardForm = ({
   topicId,
   onCancel,
   onSave,
-  isLoading = false
+  isLoading = false,
+  onChange
 }) => {
   // Form state
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
   const [frontError, setFrontError] = useState<string | null>(null);
   const [backError, setBackError] = useState<string | null>(null);
-  const [apiError, setApiError] = useState<string | null>(null);
-  const [frontFocused, setFrontFocused] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);  const [frontFocused, setFrontFocused] = useState(false);
   const [backFocused, setBackFocused] = useState(false);
+  
+  // Ref for autofocus
+  const frontTextareaRef = useRef<HTMLTextAreaElement>(null);
+  
+  // Focus on the front textarea when the component mounts
+  useEffect(() => {
+    if (frontTextareaRef.current) {
+      frontTextareaRef.current.focus();
+    }
+  }, []);
   
   // IDs for accessibility
   const frontId = React.useId();
@@ -48,7 +51,6 @@ export const ManualFlashcardForm = ({
   const errorId = React.useId();
   
   const toast = useToast();
-
   // Handle front field changes
   const handleFrontChange = (e) => {
     const value = e.target.value;
@@ -61,6 +63,10 @@ export const ManualFlashcardForm = ({
     setFront(value);
     setFrontError(null);
     setApiError(null);
+    
+    if (onChange) {
+      onChange();
+    }
   };
 
   // Handle back field changes
@@ -75,6 +81,10 @@ export const ManualFlashcardForm = ({
     setBack(value);
     setBackError(null);
     setApiError(null);
+    
+    if (onChange) {
+      onChange();
+    }
   };
 
   // Validate form before submission
@@ -95,7 +105,6 @@ export const ManualFlashcardForm = ({
       return false;
     }
   };
-
   // Form submission handler
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -113,6 +122,23 @@ export const ManualFlashcardForm = ({
       setApiError('Wystąpił błąd podczas zapisywania fiszki. Spróbuj ponownie.');
     }
   };
+  
+  // Handle keyboard shortcuts
+  const handleKeyDown = (e) => {
+    // Ctrl/Cmd + Enter to submit the form
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      if (!isSaveDisabled) {
+        e.preventDefault();
+        handleSubmit(e);
+      }
+    }
+    
+    // Escape to cancel
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      onCancel();
+    }
+  };
 
   // Calculate remaining characters
   const frontCharsRemaining = MAX_FLASHCARD_LENGTH - front.length;
@@ -120,9 +146,18 @@ export const ManualFlashcardForm = ({
   
   // Determine if save button should be disabled
   const isSaveDisabled = isLoading || !front.trim() || !back.trim() || Boolean(frontError) || Boolean(backError);
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="space-y-6">
+      {/* Keyboard shortcuts info */}
+      <div className="flex items-center justify-end gap-1 text-xs text-gray-500">
+        <span>Skróty: </span>
+        <kbd className="px-1 py-0.5 bg-gray-800 rounded border border-gray-700 text-gray-400">Ctrl+Enter</kbd>
+        <span>zapisz</span>
+        <span className="mx-1">•</span>
+        <kbd className="px-1 py-0.5 bg-gray-800 rounded border border-gray-700 text-gray-400">Esc</kbd>
+        <span>anuluj</span>
+      </div>
+      
       {/* API Error Alert */}
       {apiError && (
         <div
@@ -151,8 +186,8 @@ export const ManualFlashcardForm = ({
             {frontCharsRemaining} znaków pozostało
           </span>
         </div>
-        
-        <textarea
+          <textarea
+          ref={frontTextareaRef}
           id={frontId}
           value={front}
           onChange={handleFrontChange}

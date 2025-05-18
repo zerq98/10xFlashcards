@@ -1,34 +1,35 @@
-import React, { useState } from 'react';
-import { ManualFlashcardFormModal } from './ManualFlashcardFormModal';
-import type { FlashcardDTO } from '../../types';
+import React, { useState } from "react";
+import type { FlashcardDTO } from "../../types";
+import { ManualFlashcardFormModal } from "./ManualFlashcardFormModal";
 
 interface AddManualFlashcardButtonProps {
   topicId: string;
-  variant?: 'primary' | 'outline';
-  size?: 'normal' | 'large';
+  variant?: "primary" | "outline";
+  size?: "normal" | "large";
   onFlashcardAdded: (flashcard: FlashcardDTO) => void;
 }
 
 export const AddManualFlashcardButton = ({
   topicId,
-  variant = 'primary',
-  size = 'normal',
-  onFlashcardAdded
+  variant = "primary",
+  size = "normal",
+  onFlashcardAdded,
 }: AddManualFlashcardButtonProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Style based on variant and size
   const getStyle = () => {
-    const baseStyle = "rounded-md px-4 py-2 font-medium shadow-light cursor-pointer";
-    
-    const variantStyle = variant === 'primary'
-      ? "bg-gradient-to-r from-primary via-secondary-400 to-accent-200 text-white hover:shadow-medium duration-300"
-      : "bg-transparent border border-gradient-to-r from-primary via-secondary-400 to-accent-200 text-white hover:shadow-medium transition-shadow";
-    
-    const sizeStyle = size === 'large'
-      ? "hover:scale-110 transition-all"
-      : "transition-shadow";
-    
+    const baseStyle =
+      "rounded-md px-4 py-2 font-medium shadow-light cursor-pointer";
+
+    const variantStyle =
+      variant === "primary"
+        ? "bg-gradient-to-r from-primary via-secondary-400 to-accent-200 text-white hover:shadow-medium duration-300"
+        : "bg-transparent border border-gradient-to-r from-primary via-secondary-400 to-accent-200 text-white hover:shadow-medium transition-shadow";
+
+    const sizeStyle =
+      size === "large" ? "hover:scale-110 transition-all" : "transition-shadow";
+
     return `${baseStyle} ${variantStyle} ${sizeStyle}`;
   };
 
@@ -38,17 +39,20 @@ export const AddManualFlashcardButton = ({
     console.log("AddManualFlashcardButton clicked");
     setIsModalOpen(true);
   };
-  
+
   return (
     <>
+      {" "}
       <button
         className={getStyle()}
         onClick={handleClick}
         type="button"
+        aria-label="Dodaj nową fiszkę"
+        aria-haspopup="dialog"
+        aria-expanded={isModalOpen}
       >
         Dodaj fiszki
       </button>
-
       {isModalOpen && (
         <ManualFlashcardFormModal
           isOpen={isModalOpen}

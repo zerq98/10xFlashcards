@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +24,30 @@ export const ManualFlashcardFormModal = ({
   onFlashcardAdded,
   isLoading = false,
 }: ManualFlashcardFormModalProps) => {
+  // State to track form changes and confirmation dialog
+  const [hasFormChanges, setHasFormChanges] = useState(false);
+  const confirmDialogRef = useRef<HTMLDivElement>(null);
+  
+  // Function to handle form changes
+  const handleFormChange = () => {
+    setHasFormChanges(true);
+  };
+  
+  // Function to handle close with confirmation if needed
+  const handleClose = () => {
+    if (hasFormChanges) {
+      // Show confirmation dialog using the onClose handler
+      const userConfirmed = window.confirm("Masz niezapisane zmiany. Czy na pewno chcesz zamknąć formularz?");
+      
+      if (userConfirmed) {
+        onClose();
+      }
+      // If not confirmed, do nothing and keep the dialog open
+    } else {
+      // No changes, close directly
+      onClose();
+    }
+  };
   // Handle saving the flashcard
   const handleSaveFlashcard = async (
     flashcardData: CreateFlashcardRequestDTO
@@ -60,10 +84,16 @@ export const ManualFlashcardFormModal = ({
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose();
+        if (!open) handleClose();
       }}
     >
-      <DialogContent className="border-0 bg-gray-900 m-0">
+      <DialogContent 
+        className="border-0 bg-gray-900 m-0"
+        onEscapeKeyDown={(e) => {
+          e.preventDefault();
+          handleClose();
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold leading-none tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary-400 to-accent-200">
             Dodaj nową fiszkę
@@ -76,15 +106,20 @@ export const ManualFlashcardFormModal = ({
         <div className="mt-6">
           <ManualFlashcardForm
             topicId={topicId}
-            onCancel={onClose}
+            onCancel={handleClose}
             onSave={handleSaveFlashcard}
             isLoading={isLoading}
+            onChange={handleFormChange}
           />
         </div>
         
         <DialogClose
           className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           aria-label="Zamknij"
+          onClick={(e) => {
+            e.preventDefault();
+            handleClose();
+          }}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
