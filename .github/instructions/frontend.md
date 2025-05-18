@@ -28,6 +28,8 @@
 - Leverage Server Components for {{data_fetching_heavy_components}} when using React with Next.js or similar frameworks
 - Consider using the new useOptimistic hook for optimistic UI updates in forms
 - Use useTransition for non-urgent state updates to keep the UI responsive
+- Always use the latest React features and APIs for better performance and developer experience
+- Always use the latest React syntax
 
 
 ### Guidelines for ACCESSIBILITY
