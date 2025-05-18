@@ -2,6 +2,7 @@ import type { APIRoute } from "astro"
 import { z } from "zod"
 import { createHash } from "crypto"
 import { v4 as uuidv4 } from "uuid"
+import OpenAI from "openai"
 
 import {
   type GenerateFlashcardsRequestDTO,
@@ -31,19 +32,22 @@ interface GenerateFlashcardsCommand {
 }
 
 /**
- * OpenRouter AI service for generating flashcards
+ * GPT AI service for generating flashcards using the official OpenAI library
  */
-class OpenRouterService {
-  private readonly apiKey: string
-  private readonly baseUrl: string
+class GPTService {
+  private readonly client: OpenAI
   
   constructor() {
-    this.apiKey = import.meta.env.OPEN_ROUTER_API_KEY
-    this.baseUrl = import.meta.env.OPEN_ROUTER_BASE_URL || "https://openrouter.ai/api/v1/chat/completions"
+    const apiKey = import.meta.env.OPENAI_API_KEY
     
-    if (!this.apiKey) {
-      throw new Error("OPEN_ROUTER_API_KEY environment variable is not set")
+    if (!apiKey) {
+      throw new Error("OPENAI_API_KEY environment variable is not set")
     }
+    
+    // Initialize the OpenAI client with the API key
+    this.client = new OpenAI({ 
+      apiKey,
+    })
   }
   
   /**
@@ -60,33 +64,19 @@ class OpenRouterService {
       The front should contain a question or concept, and the back should contain the answer or explanation. 
       Keep both sides concise but comprehensive. Don't include any explanation outside the JSON.`
       
-      const response = await fetch(this.baseUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${this.apiKey}`,
-          "HTTP-Referer": import.meta.env.SITE_URL || "https://10xflashcards.com"
-        },
-        body: JSON.stringify({
-          model: "openai/gpt-4-turbo",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: text }
-          ],
-          temperature: 0.7,
-          max_tokens: 2048
-        })
+      // Use the OpenAI SDK to create chat completions
+      const response = await this.client.chat.completions.create({
+        model: "gpt-4-turbo",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: text }
+        ],
+        temperature: 0.7,
+        max_tokens: 2048
       })
       
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(`OpenRouter API error: ${errorData.error?.message || response.statusText}`)
-      }
-      
-      const data = await response.json()
-      
-      // Extract and parse the JSON from the AI response
-      const content = data.choices[0]?.message?.content
+      // Extract content from the response
+      const content = response.choices[0]?.message?.content
       if (!content) {
         throw new Error("Empty response from AI service")
       }
@@ -96,8 +86,7 @@ class OpenRouterService {
       if (!jsonMatch) {
         throw new Error("No valid JSON found in the AI response")
       }
-      
-      const flashcards = JSON.parse(jsonMatch[0]) as GeneratedFlashcard[]
+        const flashcards = JSON.parse(jsonMatch[0]) as GeneratedFlashcard[]
       
       // Validate the structure of each flashcard
       if (!Array.isArray(flashcards) || flashcards.length === 0) {
@@ -109,7 +98,7 @@ class OpenRouterService {
         back: card.back
       }))
     } catch (error) {
-      console.error("OpenRouter service error:", error)
+      console.error("GPT service error:", error)
       throw error
     }
   }
@@ -253,6 +242,8 @@ class RateLimiter {
 
 export const POST: APIRoute = async ({ request, params, locals }) => {
   try {
+
+    console.log("Generating flashcards...")
     // 1. Request validation
     const topicId = params.topicId
     if (!topicId) {
@@ -361,9 +352,8 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
     if (cachedFlashcards) {
       // Use cached flashcards if available
       generatedFlashcards = cachedFlashcards
-    } else {
-      // Generate new flashcards
-      const aiService = new OpenRouterService()
+    } else {      // Generate new flashcards
+      const aiService = new GPTService()
       generatedFlashcards = await aiService.generateFlashcards(requestBody.text, requestBody.count)
       
       // Store in cache for future reuse

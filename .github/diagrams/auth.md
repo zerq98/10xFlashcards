@@ -1,34 +1,38 @@
 <authentication_analysis>
-1. Przepływy autentykacji:
-   - Rejestracja (signUp)
-   - Logowanie (signInWithPassword)
-   - Wylogowanie (signOut)
-   - Zapomniane hasło (send reset link)
-   - Reset hasła (verify token + update)
-   - Zmiana hasła (re-authenticate + update)
-   - Usunięcie konta (re-authenticate + soft delete)
-   - Ochrona tras (middleware protectRoute)
-   - Odświeżanie tokenu (middleware przed wygaśnięciem)
+## Analiza przepływów autentykacji
 
-2. Główni aktorzy i ich interakcje:
-   - Browser: wysyła żądania i odbiera odpowiedzi
-   - Middleware: weryfikuje/odświeża tokeny i chroni trasy
-   - AstroAPI: punkt końcowy /api/auth/* wykonujący operacje
-   - SupabaseAuth: realizuje operacje signUp, signIn, signOut, token refresh
+### Przepływy autentykacji wymienione w dokumentacji
+1. Rejestracja użytkownika za pomocą adresu e-mail i hasła
+2. Logowanie użytkownika za pomocą adresu e-mail i hasła
+3. Odzyskiwanie zapomnianego hasła
+4. Zmiana hasła przez zalogowanego użytkownika
+5. Usuwanie konta użytkownika
+6. Ochrona tras (middleware protectRoute)
+7. Odświeżanie tokenu (middleware przed wygaśnięciem)
+8. Wylogowanie
 
-3. Proces weryfikacji i odświeżania tokenów:
-   - Middleware odczytuje access_token i refresh_token z ciastek
-   - Jeśli access_token ważny → kontynuacja SSR
-   - Gdy access_token wygasł → wywołanie odświeżenia przez SupabaseAuth
-   - SupabaseAuth zwraca nowe tokeny, middleware je ustawia
+### Główni aktorzy i ich interakcje
+1. **Przeglądarka** - interfejs użytkownika, gdzie użytkownik wprowadza dane
+2. **Middleware** - warstwa pośrednia weryfikująca tokeny i sesje
+3. **Astro API** - obsługuje żądania i komunikuje się z Supabase
+4. **Supabase Auth** - odpowiada za uwierzytelnianie i zarządzanie sesjami
 
-4. Krótki opis każdego kroku:
-   - Żądanie zasobu chronionego → middleware weryfikuje sesję
-   - Rejestracja/logowanie → AstroAPI używa SupabaseAuth i zwraca sesję
-   - Zapomniane hasło → generowanie i wysłanie linku resetu
-   - Reset hasła → weryfikacja tokenu i aktualizacja hasła
-   - Zmiana hasła → re-autoryzacja i updateUser
-   - Usunięcie konta → re-autoryzacja, soft delete, wylogowanie
+### Procesy weryfikacji i odświeżania tokenów
+1. **Weryfikacja tokenu dostępu** - sprawdzanie podczas każdego żądania chronionego zasobu
+2. **Odświeżanie tokenu** - automatyczne odnowienie tokenu, gdy wygaśnie
+3. **Walidacja sesji** - sprawdzenie czy sesja jest aktywna i powiązana z właściwym użytkownikiem
+4. **Obsługa wygaśnięcia tokenu** - przekierowanie do ponownego logowania lub ciche odświeżenie
+5. **Tokeny w cookies** - przechowywanie tokenów w bezpiecznych cookies HttpOnly
+
+### Kroki autentykacji
+1. **Rejestracja** - przesłanie danych rejestracyjnych, walidacja, utworzenie konta w Supabase, wystawienie tokenów
+2. **Logowanie** - wprowadzenie poświadczeń, weryfikacja w Supabase Auth, wystawienie tokenów sesyjnych
+3. **Odzyskiwanie hasła** - żądanie resetu, wysłanie e-maila z tokenem, utworzenie nowego hasła
+4. **Weryfikacja tokenu** - sprawdzenie ważności tokenu w middleware przed dostępem do zasobów
+5. **Odświeżanie tokenu** - automatyczne odświeżanie przez middleware przy wygaśnięciu
+6. **Wylogowanie** - unieważnienie tokenów sesji, usunięcie danych sesji
+7. **Zmiana hasła** - weryfikacja aktualnego hasła, walidacja nowego, aktualizacja w bazie danych
+8. **Usunięcie konta** - weryfikacja tożsamości, oznaczenie konta jako usunięte (soft delete)
 </authentication_analysis>
 
 <mermaid_diagram>
@@ -38,174 +42,152 @@ sequenceDiagram
     
     participant Browser as Przeglądarka
     participant Middleware as Middleware
-    participant API as Astro API
+    participant Astro as Astro API
     participant Auth as Supabase Auth
     
     %% Proces rejestracji
-    Note over Browser,Auth: Proces Rejestracji
-    Browser->>API: Wypełnienie formularza rejestracji
-    API->>API: Walidacja danych
-    API->>Auth: Rejestracja użytkownika
-    Auth-->>API: Utworzenie konta użytkownika
-    API-->>Browser: Informacja o wysłaniu emaila z weryfikacją
-    Auth->>Browser: Email z linkiem weryfikacyjnym
-    Browser->>Auth: Kliknięcie w link weryfikacyjny
-    Auth-->>Browser: Potwierdzenie email, przekierowanie do logowania
+    Note over Browser,Auth: Proces rejestracji użytkownika
+    Browser->>Astro: Wysłanie formularza rejestracji
+    activate Astro
+    Astro->>Astro: Walidacja danych wejściowych
+    Astro->>Auth: Przekazanie danych rejestracyjnych
+    activate Auth
+    Auth->>Auth: Walidacja danych i utworzenie konta
+    Auth-->>Astro: Odpowiedź z tokenami (access, refresh)
+    deactivate Auth
+    Astro-->>Browser: Przekazanie tokenów w cookies
+    deactivate Astro
+    Auth->>Browser: Wysłanie e-maila weryfikacyjnego
+    Browser->>Auth: Kliknięcie linku weryfikacyjnego
+    activate Auth
+    Auth->>Auth: Weryfikacja e-maila
+    Auth-->>Browser: Przekierowanie do aplikacji z potwierdzeniem
+    deactivate Auth
     
     %% Proces logowania
-    Note over Browser,Auth: Proces Logowania
-    Browser->>API: Wypełnienie formularza logowania
-    API->>Auth: Żądanie uwierzytelnienia
-    Auth-->>API: Weryfikacja danych logowania
-    alt Logowanie udane
-        Auth->>API: Zwrócenie tokenu dostępu i odświeżania
-        API->>Middleware: Zapisanie tokenu w cookies
-        API-->>Browser: Przekierowanie do strony głównej
-    else Niepoprawne dane
-        Auth-->>API: Błąd uwierzytelniania
-        API-->>Browser: Wyświetlenie komunikatu o błędzie
+    Note over Browser,Auth: Proces logowania użytkownika
+    Browser->>Astro: Wysłanie formularza logowania
+    activate Astro
+    Astro->>Auth: Przekazanie danych logowania
+    activate Auth
+    Auth->>Auth: Weryfikacja poświadczeń
+    Auth-->>Astro: Odpowiedź z tokenami (access, refresh)
+    deactivate Auth
+    Astro-->>Browser: Przekazanie tokenów w cookies
+    Astro-->>Browser: Przekierowanie do panelu głównego
+    deactivate Astro
+    
+    %% Weryfikacja tokenu i dostęp do zasobów
+    Note over Browser,Auth: Dostęp do chronionych zasobów
+    Browser->>Middleware: Żądanie chronionego zasobu z cookies
+    activate Middleware
+    Middleware->>Auth: Weryfikacja tokenu dostępu
+    activate Auth
+    
+    alt Token ważny
+        Auth-->>Middleware: Token poprawny
+        deactivate Auth
+        Middleware->>Astro: Przekazanie żądania
+        activate Astro
+        Astro-->>Browser: Zwrócenie chronionego zasobu
+        deactivate Astro
+        deactivate Middleware
+    else Token wygasł/niepoprawny
+        Auth-->>Middleware: Token wygasł/niepoprawny
+        deactivate Auth
+        
+        alt Token refresh ważny
+            Middleware->>Auth: Żądanie odświeżenia tokenu
+            activate Auth
+            Auth-->>Middleware: Nowe tokeny (access, refresh)
+            deactivate Auth
+            Middleware->>Astro: Przekazanie żądania z nowym tokenem
+            activate Astro
+            Astro-->>Browser: Zwrócenie chronionego zasobu
+            deactivate Astro
+            Middleware-->>Browser: Aktualizacja cookies z nowymi tokenami
+            deactivate Middleware
+        else Token refresh wygasł/niepoprawny
+            Middleware-->>Browser: Przekierowanie do strony logowania
+            deactivate Middleware
+        end
     end
     
-    %% Proces weryfikacji sesji
-    Note over Browser,Auth: Weryfikacja Sesji
-    Browser->>Middleware: Żądanie dostępu do chronionej strony
-    Middleware->>Middleware: Sprawdzenie tokenu z cookies
-    alt Token prawidłowy i ważny
-        Middleware->>API: Przekazanie żądania
-        API-->>Browser: Zwrócenie chronionych danych
-    else Token wygasł
-        Middleware->>Auth: Żądanie odświeżenia tokenu
-        Auth-->>Middleware: Nowy token dostępu
-        Middleware->>API: Przekazanie żądania z nowym tokenem
-        API-->>Browser: Zwrócenie chronionych danych
-    else Brak tokenu lub nieprawidłowy
-        Middleware-->>Browser: Przekierowanie do strony logowania
-    end
+    %% Odzyskiwanie hasła
+    Note over Browser,Auth: Proces odzyskiwania hasła
+    Browser->>Astro: Żądanie resetu hasła
+    activate Astro
+    Astro->>Auth: Przekazanie żądania resetu
+    activate Auth
+    Auth->>Auth: Wygenerowanie tokenu resetu
+    Auth->>Browser: Wysłanie e-maila z linkiem do resetu
+    deactivate Auth
+    deactivate Astro
+    Browser->>Auth: Kliknięcie linku do resetu
+    activate Auth
+    Auth->>Auth: Weryfikacja tokenu resetu
+    Auth-->>Browser: Wyświetlenie formularza nowego hasła
+    deactivate Auth
+    Browser->>Astro: Wysłanie nowego hasła
+    activate Astro
+    Astro->>Auth: Przekazanie nowego hasła
+    activate Auth
+    Auth->>Auth: Walidacja i zmiana hasła
+    Auth-->>Astro: Potwierdzenie zmiany hasła
+    deactivate Auth
+    Astro-->>Browser: Potwierdzenie zmiany hasła
+    deactivate Astro
     
-    %% Proces odzyskiwania hasła
-    Note over Browser,Auth: Odzyskiwanie Hasła
-    Browser->>API: Żądanie resetowania hasła (email)
-    API->>Auth: Inicjowanie resetowania hasła
-    Auth->>Browser: Email z tokenem resetowania hasła
-    Browser->>API: Kliknięcie w link z tokenem
-    API->>API: Walidacja tokenu resetowania
-    alt Token prawidłowy
-        Browser->>API: Formularz z nowym hasłem
-        API->>Auth: Zmiana hasła
-        Auth-->>API: Potwierdzenie zmiany hasła
-        API-->>Browser: Informacja o sukcesie
-    else Token nieprawidłowy lub wygasł
-        API-->>Browser: Informacja o błędzie
-    end
+    %% Zmiana hasła przez zalogowanego użytkownika
+    Note over Browser,Auth: Zmiana hasła przez zalogowanego użytkownika
+    Browser->>Middleware: Żądanie zmiany hasła z tokenem
+    activate Middleware
+    Middleware->>Auth: Weryfikacja tokenu
+    activate Auth
+    Auth-->>Middleware: Token poprawny
+    deactivate Auth
+    Middleware->>Astro: Przekazanie żądania zmiany
+    deactivate Middleware
+    activate Astro
+    Astro->>Auth: Żądanie zmiany hasła
+    activate Auth
+    Auth->>Auth: Walidacja i zmiana hasła
+    Auth-->>Astro: Potwierdzenie zmiany
+    deactivate Auth
+    Astro-->>Browser: Komunikat o powodzeniu
+    deactivate Astro
     
-    %% Zmiana hasła
-    Note over Browser,Auth: Zmiana Hasła
-    Browser->>Middleware: Żądanie dostępu do strony zmiany hasła
-    Middleware->>Middleware: Weryfikacja tokenu sesji
-    Middleware-->>Browser: Dostęp do strony zmiany hasła
-    Browser->>API: Formularz ze starym i nowym hasłem
-    API->>Auth: Weryfikacja starego i zmiana na nowe hasło
-    Auth-->>API: Potwierdzenie zmiany hasła
-    API-->>Browser: Informacja o sukcesie
+    %% Wylogowanie
+    Note over Browser,Auth: Proces wylogowania
+    Browser->>Middleware: Żądanie wylogowania
+    activate Middleware
+    Middleware->>Auth: Unieważnienie tokenów
+    activate Auth
+    Auth-->>Middleware: Potwierdzenie wylogowania
+    deactivate Auth
+    Middleware-->>Browser: Usunięcie cookies i przekierowanie
+    deactivate Middleware
     
     %% Usuwanie konta
-    Note over Browser,Auth: Usuwanie Konta
-    Browser->>Middleware: Żądanie dostępu do strony usuwania konta
-    Middleware->>Middleware: Weryfikacja tokenu sesji
-    Middleware-->>Browser: Dostęp do strony usuwania konta
-    Browser->>API: Potwierdzenie usunięcia z hasłem
-    API->>Auth: Weryfikacja hasła
-    API->>Auth: Żądanie usunięcia konta
-    Auth-->>API: Potwierdzenie usunięcia konta
-    API->>Middleware: Usunięcie tokenu z cookies
-    API-->>Browser: Informacja o usunięciu, przekierowanie
+    Note over Browser,Auth: Proces usuwania konta
+    Browser->>Middleware: Żądanie usunięcia konta
+    activate Middleware
+    Middleware->>Auth: Weryfikacja tokenu
+    activate Auth
+    Auth-->>Middleware: Token poprawny
+    deactivate Auth
+    Middleware->>Astro: Przekazanie żądania usunięcia
+    deactivate Middleware
+    activate Astro
+    Astro->>Auth: Weryfikacja hasła użytkownika
+    activate Auth
+    Auth-->>Astro: Hasło poprawne
+    Astro->>Auth: Żądanie soft delete konta
+    Auth->>Auth: Oznaczenie konta jako usunięte
+    Auth-->>Astro: Potwierdzenie usunięcia
+    deactivate Auth
+    Astro->>Auth: Unieważnienie sesji
+    Astro-->>Browser: Usunięcie cookies i przekierowanie
+    deactivate Astro
 ```
-sequenceDiagram
-  autonumber
-  participant Browser
-  participant Middleware
-  participant AstroAPI
-  participant SupabaseAuth
-
-  activate Browser
-  Browser->>Middleware: Żądanie zasobu chronionego
-  activate Middleware
-  Middleware->>Middleware: Sprawdź access_token
-  alt Token ważny
-    Middleware->>AstroAPI: SSR żądanie + sesja
-    deactivate Middleware
-    activate AstroAPI
-    AstroAPI->>Browser: Render strony z sesją
-    deactivate AstroAPI
-  else Token wygasł lub brak
-    Middleware->>SupabaseAuth: Odśwież token (refresh_token)
-    activate SupabaseAuth
-    SupabaseAuth-->>Middleware: Nowe tokeny
-    deactivate SupabaseAuth
-    Middleware->>Browser: Ustaw ciasteczka
-    Middleware-->>Browser: Retry / żądanie zasobu
-    deactivate Middleware
-  end
-
-  %% Rejestracja
-  activate Browser
-  Browser->>AstroAPI: POST /api/auth/register
-  activate AstroAPI
-  AstroAPI->>SupabaseAuth: signUp({email,password})
-  activate SupabaseAuth
-  SupabaseAuth-->>AstroAPI: {session}
-  deactivate SupabaseAuth
-  AstroAPI->>Browser: Set cookies + redirect /topics
-  deactivate AstroAPI
-  deactivate Browser
-
-  %% Logowanie
-  Browser->>AstroAPI: POST /api/auth/login
-  activate AstroAPI
-  AstroAPI->>SupabaseAuth: signInWithPassword({email,password})
-  activate SupabaseAuth
-  SupabaseAuth-->>AstroAPI: {session}
-  deactivate SupabaseAuth
-  AstroAPI->>Browser: Set cookies + redirect /topics
-  deactivate AstroAPI
-
-  %% Zapomniane hasło
-  Browser->>AstroAPI: POST /api/auth/forgot-password
-  activate AstroAPI
-  AstroAPI->>SupabaseAuth: sendResetEmail
-  activate SupabaseAuth
-  SupabaseAuth-->>AstroAPI: success
-  deactivate SupabaseAuth
-  AstroAPI->>Browser: Banner potwierdzenia
-  deactivate AstroAPI
-
-  %% Reset hasła
-  Browser->>AstroAPI: POST /api/auth/reset-password
-  activate AstroAPI
-  AstroAPI->>SupabaseAuth: verifyToken + updatePassword
-  activate SupabaseAuth
-  SupabaseAuth-->>AstroAPI: success
-  deactivate SupabaseAuth
-  AstroAPI->>Browser: Redirect /login + komunikat
-  deactivate AstroAPI
-
-  %% Zmiana hasła
-  Browser->>AstroAPI: PUT /api/auth/change-password
-  activate AstroAPI
-  AstroAPI->>SupabaseAuth: re-authenticate + updateUser
-  activate SupabaseAuth
-  SupabaseAuth-->>AstroAPI: success
-  deactivate SupabaseAuth
-  AstroAPI->>Browser: Banner potwierdzenia
-  deactivate AstroAPI
-
-  %% Usunięcie konta
-  Browser->>AstroAPI: DELETE /api/auth/delete-account
-  activate AstroAPI
-  AstroAPI->>SupabaseAuth: re-authenticate + softDelete
-  activate SupabaseAuth
-  SupabaseAuth-->>AstroAPI: success
-  deactivate SupabaseAuth
-  AstroAPI->>Browser: Clear cookies + redirect /login
-  deactivate AstroAPI
 </mermaid_diagram>

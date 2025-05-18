@@ -8,6 +8,7 @@ import { useToast } from "../../hooks/useToast";
 import type { FlashcardDTO } from "../../types";
 import { FlashcardSkeletonList } from "./FlashcardSkeletonList";
 import { AddManualFlashcardButton } from "./AddManualFlashcardButton";
+import { AddAIFlashcardButton } from "./AddAIFlashcardButton";
 
 interface FlashcardsSectionProps {
   topicId: string;
@@ -91,11 +92,16 @@ export function FlashcardsSection({ topicId }: FlashcardsSectionProps) {
       setIsDeleting(false);
     }
   };
-
   // Handle new flashcard added
   const handleFlashcardAdded = (newFlashcard: FlashcardDTO) => {
     fetchFlashcards();
     toast.success("Fiszka została dodana");
+  };
+  
+  // Handle multiple flashcards added (from AI generation)
+  const handleFlashcardsAdded = (newFlashcards: FlashcardDTO[]) => {
+    fetchFlashcards();
+    toast.success(`Dodano ${newFlashcards.length} nowych fiszek`);
   };
 
   // Get the currently selected flashcard
@@ -147,18 +153,16 @@ export function FlashcardsSection({ topicId }: FlashcardsSectionProps) {
         </p>
         <p className="text-gray-400 mb-6">
           Dodaj swoje pierwsze fiszki lub wygeneruj je przy pomocy AI.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        </p>        <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <AddManualFlashcardButton
             topicId={topicId}
             onFlashcardAdded={handleFlashcardAdded}
           />
-          <a
-            href={`/topics/${topicId}/generate`}
-            className="rounded-md px-4 py-2 bg-transparent text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary-400 to-accent-200 border border-gray-600 hover:border-transparent hover:text-white font-medium shadow-light hover:shadow-medium transition-all duration-300 cursor-pointer hover:scale-110"
-          >
-            Generuj z AI
-          </a>
+          <AddAIFlashcardButton
+            topicId={topicId}
+            onFlashcardsAdded={handleFlashcardsAdded}
+            size="large"
+          />
         </div>
       </div>
     );
@@ -174,17 +178,14 @@ export function FlashcardsSection({ topicId }: FlashcardsSectionProps) {
           {flashcards.length} {flashcards.length === 1 ? "fiszka" : "fiszki"}
         </p>
       </div>
-      <div className="flex justify-end mb-6 gap-3">
-        <AddManualFlashcardButton
+      <div className="flex justify-end mb-6 gap-3">        <AddManualFlashcardButton
           topicId={topicId}
           onFlashcardAdded={handleFlashcardAdded}
         />
-        <a
-          href={`/topics/${topicId}/generate`}
-          className="rounded-md px-4 py-2 bg-transparent text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary-400 to-accent-200 border border-gray-600 hover:border-transparent hover:text-white hover:bg-gradient-to-r hover:from-primary hover:via-secondary-400 hover:to-accent-200 font-medium shadow-light hover:shadow-medium transition-all duration-300 cursor-pointer"
-        >
-          Generuj z AI
-        </a>
+        <AddAIFlashcardButton
+          topicId={topicId}
+          onFlashcardsAdded={handleFlashcardsAdded}
+        />
       </div>
 
       <FlashcardList

@@ -1,104 +1,182 @@
 <architecture_analysis>
-1. Komponenty wymienione w specyfikacji:
-   - Layouty: AuthLayout.astro, Layout.astro
-   - Strony Astro: register.astro, login.astro,
-     forgot-password.astro, reset-password/[token].astro,
-     account/change-password.astro, account/delete-account.astro
-   - Komponenty React: RegisterForm.tsx,
-     LoginForm.tsx, ForgotPasswordForm.tsx,
-     ResetPasswordForm.tsx, ChangePasswordForm.tsx,
-     DeleteAccountForm.tsx
-   - NavBar z przyciskami logowania/profilu
-2. Główne strony i odpowiadające im komponenty:
-   - register.astro → RegisterForm.tsx
-   - login.astro → LoginForm.tsx
-   - forgot-password.astro → ForgotPasswordForm.tsx
-   - reset-password → ResetPasswordForm.tsx
-   - change-password → ChangePasswordForm.tsx
-   - delete-account → DeleteAccountForm.tsx
-3. Przepływ danych:
-   - Formularze React wywołują endpointy API auth
-     (/api/auth/*)
-   - Layout.astro wykorzystuje middleware protectRoute
-     do ochrony stron
-   - AuthLayout.astro renderuje strony auth bez NavBar
-4. Opis funkcjonalności:
-   - AuthLayout i Layout kontrolują widoczność UI
-   - Formularze walidują dane i wysyłają żądania
-   - NavBar zmienia przyciski w zależności od sesji
+## Analiza architektury systemu
+
+### Komponenty wymienione w specyfikacji
+1. **Layouty**
+   - `AuthLayout.astro` - layout dla stron autentykacji bez nawigacji
+   - `Layout.astro` - główny layout z paskiem nawigacyjnym dla zalogowanych użytkowników
+
+2. **Strony Astro**
+   - `register.astro` - strona rejestracji nowego użytkownika
+   - `login.astro` - strona logowania
+   - `forgot-password.astro` - strona przypomnienia hasła
+   - `reset-password/[token].astro` - strona resetowania hasła z tokenem weryfikacyjnym
+   - `account/change-password.astro` - strona zmiany hasła dla zalogowanego użytkownika
+   - `account/delete-account.astro` - strona usunięcia konta
+
+3. **Komponenty React**
+   - `RegisterForm.tsx` - formularz rejestracji z walidacją danych
+   - `LoginForm.tsx` - formularz logowania
+   - `ForgotPasswordForm.tsx` - formularz przypomnienia hasła
+   - `ResetPasswordForm.tsx` - formularz resetowania hasła
+   - `ChangePasswordForm.tsx` - formularz zmiany hasła
+   - `DeleteAccountForm.tsx` - formularz usunięcia konta z potwierdzeniem
+   - `MobileNavigation.tsx` - nawigacja mobilna
+   - `Sidebar.tsx` - boczny panel nawigacyjny dla widoku desktopowego
+   - `ToastManager.tsx` - komponent do wyświetlania powiadomień
+
+### Główne strony i ich odpowiadające komponenty
+1. **Strony rejestracji i logowania**
+   - `register.astro` wykorzystuje `RegisterForm.tsx` dla interaktywnego formularza
+   - `login.astro` wykorzystuje `LoginForm.tsx` dla obsługi logowania
+   - Obie strony korzystają z `AuthLayout.astro`
+
+2. **Strony zarządzania hasłem**
+   - `forgot-password.astro` wykorzystuje `ForgotPasswordForm.tsx`
+   - `reset-password/[token].astro` wykorzystuje `ResetPasswordForm.tsx`
+   - `account/change-password.astro` wykorzystuje `ChangePasswordForm.tsx`
+   
+3. **Strona usuwania konta**
+   - `account/delete-account.astro` wykorzystuje `DeleteAccountForm.tsx`
+   - Zawiera komponent potwierdzenia z wprowadzeniem hasła
+
+### Przepływ danych między komponentami
+1. **Komunikacja klient-serwer**
+   - Formularze React wysyłają żądania do endpointów API (`/api/auth/*`)
+   - API serwera komunikuje się z Supabase Auth
+   - Middleware weryfikuje tokeny sesji przed dostępem do chronionych stron
+   - Odpowiedzi z serwera są przetwarzane w komponentach React
+
+2. **Stan aplikacji**
+   - Tokeny sesji przechowywane w cookies HttpOnly
+   - Middleware weryfikuje stan sesji i udostępnia dane przez Astro.locals
+   - Komponenty React otrzymują dane sesji przez props z komponentów Astro
+
+3. **Walidacja**
+   - Walidacja formularzy odbywa się zarówno po stronie klienta (JS) jak i serwera
+   - Błędy walidacji przekazywane są do komponentów formularzy do wyświetlenia
+
+### Funkcjonalność poszczególnych komponentów
+1. **Layouty**
+   - `AuthLayout.astro` zapewnia prosty wygląd stron autoryzacji bez nawigacji
+   - `Layout.astro` zawiera nawigację i strukturę dla zalogowanych użytkowników
+
+2. **Formularze React**
+   - Obsługują wprowadzanie danych przez użytkownika
+   - Przeprowadzają walidację danych wejściowych
+   - Komunikują się z API poprzez hooki
+   - Wyświetlają komunikaty o błędach i sukcesie
+
+3. **Komponenty nawigacyjne**
+   - Dostosowują wyświetlane opcje w zależności od stanu zalogowania
+   - Zapewniają dostęp do ustawień konta i opcji wylogowania
 </architecture_analysis>
 
 <mermaid_diagram>
 ```mermaid
 flowchart TD
-    %% Layouty główne
-    L1[Layout.astro] --> S1[Sidebar.tsx]
-    L1 --> M1[MobileNavigation.tsx]
-    L1 --> MB[Main Content]
-    
-    L2[AuthLayout.astro] --> AB[Auth Content]
-    
-    %% Strony Astro
-    subgraph "Strony Autoryzacji"
-        R1[register.astro] --> RF[RegisterForm.tsx]
-        L3[login.astro] --> LF[LoginForm.tsx]
-        FP[forgot-password.astro] --> FPF[ForgotPasswordForm.tsx]
-        RP["reset-password/[token].astro"] --> RPF[ResetPasswordForm.tsx]
-        CP["account/change-password.astro"] --> CPF[ChangePasswordForm.tsx]
-        DA["account/delete-account.astro"] --> DAF[DeleteAccountForm.tsx]
+    %% Główne layouty aplikacji
+    subgraph "Layouty"
+        L1["Layout.astro"] -.-> L2["AuthLayout.astro"]
+        L1 --> NAV["Komponenty nawigacyjne"]
+        L2 --> AUTH["Komponenty autoryzacji"]
     end
     
-    %% Komponenty autoryzacji
-    subgraph "Komponenty React Autoryzacji"
-        RF --> V1[Walidacja Email]
-        RF --> V2[Walidacja Hasła]
-        RF --> PS[PasswordStrength]
+    subgraph "Komponenty nawigacyjne"
+        NAV --> SB["Sidebar.tsx"]
+        NAV --> MN["MobileNavigation.tsx"]
+        NAV --> TM["ToastManager.tsx"]
         
-        LF --> V1
-        FPF --> V1
-        
-        RPF --> V2
-        RPF --> PS
-        
-        CPF --> V2
-        CPF --> PS
-        
-        DAF --> D1[Dialog potwierdzenia]
+        SB --> PROFILE["Przycisk profilu"]
+        MN --> PROFILE
     end
     
-    %% Middleware i API
-    subgraph "System Autoryzacji"
-        MW[Middleware] --> PR[protectRoute]
-        MW --> RT[refreshToken]
+    subgraph "Strony Astro"
+        AUTH --> LOGIN["login.astro"]
+        AUTH --> REG["register.astro"]
+        AUTH --> FP["forgot-password.astro"]
+        AUTH --> RP["reset-password/[token].astro"]
         
-        API["API (/api/auth/)"] --> MW
-        
-        PR --> IS[isSession]
-        RT --> IS
+        L1 --> ACCT["account/settings.astro"]
+        ACCT --> CP["change-password.astro"]
+        ACCT --> DA["delete-account.astro"]
     end
     
-    %% Powiązania funkcji
-    L3 -.-> API
-    R1 -.-> API
-    FP -.-> API
-    RP -.-> API
-    CP -.-> API
-    DA -.-> API
+    subgraph "Komponenty React Auth"
+        LOGIN --> LOGINFORM["LoginForm.tsx"]
+        REG --> REGFORM["RegisterForm.tsx"]
+        FP --> FPFORM["ForgotPasswordForm.tsx"]
+        RP --> RPFORM["ResetPasswordForm.tsx"]
+        CP --> CPFORM["ChangePasswordForm.tsx"]
+        DA --> DAFORM["DeleteAccountForm.tsx"]
+        
+        LOGINFORM --> FORMCOMP["Wspólne komponenty formularzy"]
+        REGFORM --> FORMCOMP
+        FPFORM --> FORMCOMP
+        RPFORM --> FORMCOMP
+        CPFORM --> FORMCOMP
+        DAFORM --> FORMCOMP
+        
+        FORMCOMP --> VALID["Komponenty walidacji"]
+        FORMCOMP --> UI["Elementy UI"]
+    end
     
-    %% Nawigacja
-    S1 --> CP
-    M1 --> CP
-    M1 --> DA
+    subgraph "Wspólne komponenty UI"
+        UI --> BUTTON["Button"]
+        UI --> INPUT["Input"]
+        UI --> TOAST["Toast"]
+        UI --> DIALOG["Dialog"]
+        UI --> LABEL["Label"]
+    end
     
-    %% Stylizacja
-    classDef page fill:#131924,stroke:#0602de,stroke-width:2px
-    classDef component fill:#1a2233,stroke:#02de0a,stroke-width:2px
-    classDef middleware fill:#1a2233,stroke:#6002db,stroke-width:2px
+    subgraph "Middleware i API"
+        MW["Middleware"] --> PROTECT["protectRoute"]
+        MW --> REFRESH["refreshToken"]
+        
+        LOGINFORM --> APIL["api/auth/login"]
+        REGFORM --> APIR["api/auth/register"]
+        FPFORM --> APIFP["api/auth/forgot-password"]
+        RPFORM --> APIRP["api/auth/reset-password"]
+        CPFORM --> APICP["api/auth/change-password"]
+        DAFORM --> APIDA["api/auth/delete-account"]
+        
+        APIL --> DB["Supabase Auth"]
+        APIR --> DB
+        APIFP --> DB
+        APIRP --> DB
+        APICP --> DB
+        APIDA --> DB
+        
+        MW --> DB
+    end
     
-    class R1,L3,FP,RP,CP,DA,L1,L2 page
-    class RF,LF,FPF,RPF,CPF,DAF,S1,M1,V1,V2,PS,D1 component
-    class MW,PR,RT,IS,API middleware
+    %% Przepływ danych
+    PROFILE -->|Zalogowany| ACCT
+    PROFILE -->|Niezalogowany| LOGIN
+    ACCT -->|Chroniony zasób| MW
+    
+    %% Relacje funkcjonalne
+    LOGINFORM -->|Sukces| TM
+    REGFORM -->|Sukces| TM
+    FPFORM -->|Sukces| TM
+    RPFORM -->|Sukces| TM
+    CPFORM -->|Sukces| TM
+    DAFORM -->|Sukces| TM
+    
+    %% Stylizacja komponentów
+    classDef layout fill:#131924,stroke:#02de0a,stroke-width:2px,color:#dddddd
+    classDef page fill:#131924,stroke:#0602de,stroke-width:2px,color:#dddddd
+    classDef component fill:#1a2233,stroke:#02de0a,stroke-width:2px,color:#dddddd
+    classDef api fill:#131924,stroke:#6002db,stroke-width:2px,color:#dddddd
+    classDef db fill:#1a2233,stroke:#6002db,stroke-width:2px,color:#dddddd
+    
+    class L1,L2,NAV,AUTH layout
+    class LOGIN,REG,FP,RP,CP,DA,ACCT page
+    class LOGINFORM,REGFORM,FPFORM,RPFORM,CPFORM,DAFORM,FORMCOMP,SB,MN,TM,PROFILE,UI,VALID component
+    class APIL,APIR,APIFP,APIRP,APICP,APIDA,MW,PROTECT,REFRESH api
+    class DB db
 ```
+</mermaid_diagram>
 flowchart TD
     subgraph "Layouts"
         AuthLayout["AuthLayout.astro"]
