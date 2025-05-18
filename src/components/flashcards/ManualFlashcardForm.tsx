@@ -263,7 +263,7 @@ export const ManualFlashcardForm = ({
           type="button"
           onClick={onCancel}
           disabled={isLoading}
-          className="px-4 py-2 rounded-md text-white hover:text-gray-300 transition-colors"
+          className="px-4 py-2 rounded-md text-white hover:text-gray-300 transition-colors cursor-pointer"
         >
           Anuluj
         </button>
@@ -271,7 +271,7 @@ export const ManualFlashcardForm = ({
         <button
           type="submit"
           disabled={isSaveDisabled}
-          className={`px-4 py-2 rounded-md shadow-light hover:shadow-medium transition-all duration-300 ${
+          className={`px-4 py-2 rounded-md shadow-light hover:shadow-medium transition-all duration-300 cursor-pointer ${
             isSaveDisabled
               ? "bg-gray-700 text-gray-400 cursor-not-allowed"
               : "bg-gradient-to-r from-primary via-secondary-400 to-accent-200 text-white hover:opacity-90"

@@ -20,12 +20,10 @@ export const AddManualFlashcardButton = ({
   // Style based on variant and size
   const getStyle = () => {
     const baseStyle =
-      "rounded-md px-4 py-2 font-medium shadow-light cursor-pointer";
-
-    const variantStyle =
+      "rounded-md px-4 py-2 font-medium shadow-light cursor-pointer";    const variantStyle =
       variant === "primary"
-        ? "bg-gradient-to-r from-primary via-secondary-400 to-accent-200 text-white hover:shadow-medium duration-300"
-        : "bg-transparent border border-gradient-to-r from-primary via-secondary-400 to-accent-200 text-white hover:shadow-medium transition-shadow";
+        ? "bg-transparent text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary-400 to-accent-200 border border-gray-600 hover:border-transparent hover:text-white hover:bg-gradient-to-r hover:from-primary hover:via-secondary-400 hover:to-accent-200 duration-300"
+        : "bg-transparent text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary-400 to-accent-200 border border-gray-600 hover:border-transparent hover:text-white hover:bg-gradient-to-r hover:from-primary hover:via-secondary-400 hover:to-accent-200 transition-all";
 
     const sizeStyle =
       size === "large" ? "hover:scale-110 transition-all" : "transition-shadow";

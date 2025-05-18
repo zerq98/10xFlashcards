@@ -155,7 +155,7 @@ export function FlashcardsSection({ topicId }: FlashcardsSectionProps) {
           />
           <a
             href={`/topics/${topicId}/generate`}
-            className="rounded-md px-4 py-2 bg-transparent border border-gradient-to-r from-primary via-secondary-400 to-accent-200 text-white font-medium shadow-light hover:shadow-medium transition-all duration-300 cursor-pointer hover:scale-110"
+            className="rounded-md px-4 py-2 bg-transparent text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary-400 to-accent-200 border border-gray-600 hover:border-transparent hover:text-white font-medium shadow-light hover:shadow-medium transition-all duration-300 cursor-pointer hover:scale-110"
           >
             Generuj z AI
           </a>
@@ -175,13 +175,13 @@ export function FlashcardsSection({ topicId }: FlashcardsSectionProps) {
         </p>
       </div>
       <div className="flex justify-end mb-6 gap-3">
-       <AddManualFlashcardButton
-            topicId={topicId}
-            onFlashcardAdded={handleFlashcardAdded}
-          />
+        <AddManualFlashcardButton
+          topicId={topicId}
+          onFlashcardAdded={handleFlashcardAdded}
+        />
         <a
           href={`/topics/${topicId}/generate`}
-          className="rounded-md px-4 py-2 bg-gradient-to-r from-primary via-secondary-400 to-accent-200 text-white font-medium shadow-light hover:shadow-medium transition-shadow duration-300 cursor-pointer"
+          className="rounded-md px-4 py-2 bg-transparent text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary-400 to-accent-200 border border-gray-600 hover:border-transparent hover:text-white hover:bg-gradient-to-r hover:from-primary hover:via-secondary-400 hover:to-accent-200 font-medium shadow-light hover:shadow-medium transition-all duration-300 cursor-pointer"
         >
           Generuj z AI
         </a>

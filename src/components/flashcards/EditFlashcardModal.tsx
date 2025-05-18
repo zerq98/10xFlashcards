@@ -1,7 +1,14 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { type FlashcardVM } from "../../hooks/useFlashcards";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 interface EditFlashcardModalProps {
   isOpen: boolean;
@@ -22,22 +29,35 @@ export function EditFlashcardModal({
   const [back, setBack] = useState("");
   const [frontError, setFrontError] = useState<string | null>(null);
   const [backError, setBackError] = useState<string | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
 
-  // Load flashcard data when modal opens
+  // Load flashcard data when modal opens  // For tracking the original values to detect changes
+  const [originalFront, setOriginalFront] = useState("");
+  const [originalBack, setOriginalBack] = useState("");
+  
   useEffect(() => {
     if (isOpen && flashcard) {
-      setFront(flashcard.front);
-      setBack(flashcard.back);
+      const frontContent = flashcard.front;
+      const backContent = flashcard.back;
+      
+      setFront(frontContent);
+      setBack(backContent);
+      // Store original values
+      setOriginalFront(frontContent);
+      setOriginalBack(backContent);
       // Clear any errors
       setFrontError(null);
       setBackError(null);
+      setHasChanges(false);
     }
   }, [isOpen, flashcard]);
-
   // Handle front text change with validation
   const handleFrontChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     setFront(value);
+    
+    // Check if the content is actually different from the original
+    setHasChanges(value !== originalFront || back !== originalBack);
 
     if (!value.trim()) {
       setFrontError("Przód fiszki nie może być pusty");
@@ -52,6 +72,9 @@ export function EditFlashcardModal({
   const handleBackChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     setBack(value);
+    
+    // Check if the content is actually different from the original
+    setHasChanges(front !== originalFront || value !== originalBack);
 
     if (!value.trim()) {
       setBackError("Tył fiszki nie może być pusty");
@@ -96,46 +119,57 @@ export function EditFlashcardModal({
       });
     }
   };
-
-  if (!isOpen) return null;
+  // Handle close with confirmation if there are changes
+  const handleClose = () => {
+    if (hasChanges) {
+      const userConfirmed = window.confirm(
+        "Masz niezapisane zmiany. Czy na pewno chcesz zamknąć formularz?"
+      );
+      if (userConfirmed) {
+        onClose();
+      }
+      // If not confirmed, do nothing and keep the dialog open
+    } else {
+      // No changes, close directly
+      onClose();
+    }
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
-      <div
-        className="bg-background border border-gray-700 rounded-lg shadow-medium w-full max-w-md max-h-[90vh] overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) handleClose();
+      }}
+    >      <DialogContent
+        className="border-0 bg-gray-900 m-0"
+        onEscapeKeyDown={(e) => {
+          e.preventDefault();
+          handleClose();
+        }}
+        onInteractOutside={(e) => {
+          if (hasChanges) {
+            e.preventDefault();
+            handleClose();
+          }
+        }}
       >
-        <div className="flex justify-between items-center p-4 border-b border-gray-700">
-          <h3 className="text-xl font-bold text-white">Edytuj fiszkę</h3>{" "}
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors cursor-pointer"
-            aria-label="Zamknij"
-            disabled={isLoading}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
+        <DialogHeader>
+          <DialogTitle className="text-xl font-semibold leading-none tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary-400 to-accent-200">
+            Edytuj fiszkę
+          </DialogTitle>
+          <p className="mt-2 text-sm text-gray-400">
+            Edytuj zawartość swojej fiszki poniżej.
+          </p>
+        </DialogHeader>        {/* Keyboard shortcuts info */}
+        <div className="flex items-center justify-end gap-1 text-xs text-gray-500 mt-4">
+          <span>Skróty: </span>
+          <kbd className="px-1 py-0.5 bg-gray-800 rounded border border-gray-700 text-gray-400">Esc</kbd>
+          <span>anuluj</span>
         </div>
-
-        <form
-          onSubmit={handleSubmit}
-          className="p-4 overflow-y-auto max-h-[calc(90vh-130px)]"
-        >
+        
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div className="space-y-4">
-            {" "}
             {/* Front side */}
             <div className="space-y-2">
               <Label htmlFor="front">Przód</Label>
@@ -156,7 +190,8 @@ export function EditFlashcardModal({
               {frontError && (
                 <p className="mt-1 text-sm text-red-500">{frontError}</p>
               )}
-            </div>{" "}
+            </div>
+
             {/* Back side */}
             <div className="space-y-2">
               <Label htmlFor="back">Tył</Label>
@@ -181,19 +216,20 @@ export function EditFlashcardModal({
           </div>
 
           <div className="mt-6 flex justify-end gap-3">
-            {" "}
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 border border-gray-600 rounded-md text-white hover:bg-gray-800 transition-colors cursor-pointer"
               disabled={isLoading}
             >
               Anuluj
-            </button>{" "}
+            </button>
             <button
               type="submit"
               className={`px-4 py-2 rounded-md bg-gradient-to-r from-primary via-secondary-400 to-accent-200 text-white shadow-light hover:shadow-medium transition-shadow ${
-                isLoading ? "opacity-70 cursor-not-allowed" : "cursor-pointer"
+                isLoading || !!frontError || !!backError
+                  ? "opacity-70 cursor-not-allowed"
+                  : "cursor-pointer"
               }`}
               disabled={isLoading || !!frontError || !!backError}
             >
@@ -227,7 +263,31 @@ export function EditFlashcardModal({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+
+        <DialogClose
+          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          aria-label="Zamknij"
+          onClick={(e) => {
+            e.preventDefault();
+            handleClose();
+          }}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </DialogClose>
+      </DialogContent>
+    </Dialog>
   );
 }
