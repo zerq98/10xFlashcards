@@ -17,7 +17,12 @@ The core goal of the Minimum Viable Product (MVP) is to deliver essential featur
 *   **Backend:**
     *   [Supabase](https://supabase.com/): Open-source Firebase alternative providing PostgreSQL database, authentication, and BaaS SDKs.
 *   **AI:**
-    *   [OpenRouter.ai](https://openrouter.ai/): API gateway for accessing various AI models (e.g., OpenAI, Anthropic, Google) for flashcard generation.
+    *   [OpenAI API](https://platform.openai.com/): For accessing advanced language models to power the flashcard generation feature.
+*   **Testing:**
+    *   [Vitest](https://vitest.dev/): For unit and integration tests, compatible with the Vite ecosystem used by Astro.
+    *   [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/): For testing React components.
+    *   [MSW (Mock Service Worker)](https://mswjs.io/): For mocking API requests during tests.
+    *   [Playwright](https://playwright.dev/): For end-to-end (E2E) testing across browsers and devices.
 *   **CI/CD & Hosting:**
     *   [GitHub Actions](https://github.com/features/actions): For continuous integration and deployment pipelines.
     *   [DigitalOcean](https://www.digitalocean.com/): For hosting the application via Docker containers (planned).
@@ -67,6 +72,8 @@ The following scripts are available in `package.json`:
 *   `npm run build`: Builds the application for production.
 *   `npm run preview`: Starts a local server to preview the production build.
 *   `npm run astro`: Provides access to the Astro CLI for various commands.
+*   `npm run test`: Runs unit and integration tests with Vitest.
+*   `npm run test:e2e`: Runs end-to-end tests with Playwright.
 
 ## Project Scope (MVP)
 
