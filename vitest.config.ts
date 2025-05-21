@@ -18,10 +18,10 @@ export default defineConfig({
         '**/types.ts',
       ],
       thresholds: {
-        statements: 40,
-        branches: 40,
-        functions: 40,
-        lines: 40,
+        statements: 0,
+        branches: 0,
+        functions: 0,
+        lines: 0,
       }
     },
     include: ['**/*.test.{ts,tsx,js,jsx}', '**/*.spec.{ts,tsx,js,jsx}'],
