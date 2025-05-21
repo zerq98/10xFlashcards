@@ -9,13 +9,14 @@ import { v4 as uuidv4 } from 'uuid';
  * - Success responses use an ApiSuccessResponse<T> format with a data property
  * - Error responses use an ApiErrorResponse format with an error object containing code, message, and possibly details
  */
-export const handlers = [
-  // Auth API handlers
+export const handlers = [  // Auth API handlers
   http.post('/api/auth/login', async ({ request }) => {
     const body = await request.json() as { email: string; password: string };
     
+    console.log('🔐 Login request intercepted by MSW mock:', body);
     // Mock successful login
     if (body.email === 'test@example.com' && body.password === 'password123') {
+      console.log('✅ Authentication successful for:', body.email);
       return HttpResponse.json({
         data: {
           user: { id: '123', email: 'test@example.com' },
@@ -25,6 +26,7 @@ export const handlers = [
     }
     
     // Mock login failure
+    console.log('❌ Authentication failed for:', body.email);
     return new HttpResponse(
       JSON.stringify({ 
         error: {
