@@ -62,7 +62,7 @@ class GPTService {
       const systemPrompt = `You are a flashcard creation assistant. Create ${count} educational flashcards from the provided text. 
       Format your response as a valid JSON array with each object having "front" and "back" properties.
       The front should contain a question or concept, and the back should contain the answer or explanation. 
-      Keep both sides concise but comprehensive. Don't include any explanation outside the JSON.`
+      Keep both sides concise but comprehensive. Don't include any explanation outside the JSON.Always return data in same language as the input text.`
       
       // Use the OpenAI SDK to create chat completions
       const response = await this.client.chat.completions.create({

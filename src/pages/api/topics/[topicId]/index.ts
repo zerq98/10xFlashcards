@@ -565,3 +565,212 @@ export const PUT: APIRoute = async ({ request, params, locals }) => {
     });
   }
 };
+
+/**
+ * DELETE /api/topics/[topicId] - Delete a topic and all its associated flashcards
+ * 
+ * @param {Object} context - Astro API route context
+ * @returns {Response} 204 No Content on success or error details
+ */
+export const DELETE: APIRoute = async ({ params, locals }) => {
+  // Start performance tracking
+  const startTime = performance.now();
+  let dbOperationTime = 0;
+
+  try {
+    // 1. Validate the topicId parameter - handle this first to fail fast
+    const topicIdSchema = z.string().uuid('Topic ID must be a valid UUID');
+    const validationResult = topicIdSchema.safeParse(params.topicId);
+    
+    if (!validationResult.success) {
+      return new Response(JSON.stringify({
+        error: {
+          code: 'INVALID_TOPIC_ID',
+          message: 'Invalid topic ID format',
+          details: validationResult.error.format()
+        }
+      } satisfies ApiErrorResponse), {
+        status: 400,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store' 
+        }
+      });
+    }
+    
+    const topicId = validationResult.data;
+    
+    // 2. Check authentication - using supabase from context.locals per guidelines
+    const supabase = locals.supabase;
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      return new Response(JSON.stringify({
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'You must be logged in to delete this topic'
+        }
+      } satisfies ApiErrorResponse), {
+        status: 401,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store' 
+        }
+      });
+    }
+    
+    const userId = session.user.id;
+    
+    // 3. Verify that the topic exists and belongs to the user before deletion
+    const dbStartTime = performance.now();
+    const { data: topic, error: topicError } = await supabase
+      .from('topics')
+      .select('id, name')
+      .eq('id', topicId)
+      .eq('user_id', userId)
+      .single();
+    
+    // 4. Handle database errors and topic not found
+    if (topicError) {
+      // Check if it's a not found error
+      if (topicError.code === 'PGRST116') {
+        return new Response(JSON.stringify({
+          error: {
+            code: 'TOPIC_NOT_FOUND',
+            message: 'Topic not found or you do not have access to it'
+          }
+        } satisfies ApiErrorResponse), {
+          status: 404,
+          headers: { 
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store' 
+          }
+        });
+      }
+      
+      // Handle other database errors
+      console.error('Database query error:', topicError);
+      return new Response(JSON.stringify({
+        error: {
+          code: 'DATABASE_ERROR',
+          message: 'Failed to verify topic ownership',
+          details: topicError.message
+        }
+      } satisfies ApiErrorResponse), {
+        status: 500,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store' 
+        }
+      });
+    }
+    
+    // 5. Topic not found case (should be caught by error above but adding as a safeguard)
+    if (!topic) {
+      return new Response(JSON.stringify({
+        error: {
+          code: 'TOPIC_NOT_FOUND',
+          message: 'Topic not found or you do not have access to it'
+        }
+      } satisfies ApiErrorResponse), {
+        status: 404,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store' 
+        }
+      });
+    }
+    
+    // 6. Perform cascading deletion: first delete all flashcards in the topic
+    console.log('DEBUG: Starting cascading deletion for topic', { topicId, userId });
+    
+    const { error: flashcardsDeleteError } = await supabase
+      .from('flashcards')
+      .delete()
+      .eq('topic_id', topicId)
+      .eq('user_id', userId);
+    
+    if (flashcardsDeleteError) {
+      console.error('Error deleting flashcards:', flashcardsDeleteError);
+      return new Response(JSON.stringify({
+        error: {
+          code: 'DATABASE_ERROR',
+          message: 'Failed to delete associated flashcards',
+          details: flashcardsDeleteError.message
+        }
+      } satisfies ApiErrorResponse), {
+        status: 500,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store' 
+        }
+      });
+    }
+    
+    // 7. Delete the topic itself
+    const { error: topicDeleteError } = await supabase
+      .from('topics')
+      .delete()
+      .eq('id', topicId)
+      .eq('user_id', userId);
+    
+    dbOperationTime = performance.now() - dbStartTime;
+    
+    if (topicDeleteError) {
+      console.error('Error deleting topic:', topicDeleteError);
+      return new Response(JSON.stringify({
+        error: {
+          code: 'DATABASE_ERROR',
+          message: 'Failed to delete topic',
+          details: topicDeleteError.message
+        }
+      } satisfies ApiErrorResponse), {
+        status: 500,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store' 
+        }
+      });
+    }
+    
+    // Calculate total response time
+    const endTime = performance.now();
+    const totalDuration = endTime - startTime;
+    
+    // Log performance metrics for monitoring
+    console.info(
+      `DELETE /api/topics/${topicId} - ${totalDuration.toFixed(2)}ms - DB: ${dbOperationTime.toFixed(2)}ms`
+    );
+    
+    // 8. Return 204 No Content for successful deletion
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Cache-Control': 'no-store',
+        'Server-Timing': `db;dur=${dbOperationTime.toFixed(2)},total;dur=${totalDuration.toFixed(2)}`
+      }
+    });
+    
+  } catch (error) {
+    console.error('Unexpected error in delete topic endpoint:', error);
+    
+    // Calculate total response time even for errors
+    const endTime = performance.now();
+    const totalDuration = endTime - startTime;
+    
+    return new Response(JSON.stringify({
+      error: {
+        code: 'SERVER_ERROR',
+        message: 'An unexpected error occurred',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }
+    } satisfies ApiErrorResponse), {
+      status: 500,
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+        'Server-Timing': `total;dur=${totalDuration.toFixed(2)}`
+      }
+    });
+  }
+};
