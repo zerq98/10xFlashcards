@@ -54,7 +54,7 @@ Follow these steps to set up and run the project locally:
     # .env
     PUBLIC_SUPABASE_URL=YOUR_SUPABASE_URL
     PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
-    OPENROUTER_API_KEY=YOUR_OPENROUTER_API_KEY
+    OPENAI_API_KEY=YOUR_OPENAI_API_KEY
     # Add other variables as needed
     ```
 
